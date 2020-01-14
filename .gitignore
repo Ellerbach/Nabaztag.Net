@@ -3,3 +3,11 @@
 ################################################################################
 
 /.vs/Nabaztag.Net
+/Nabaztag.Net/bin/Debug/netstandard2.0
+/Nabaztag.Net/obj
+/Nabaztag.Net.Sample/bin/Debug/netcoreapp2.2
+/Nabaztag.Net.Sample/obj
+/Nabaztag.Net.Test/bin/Debug/netcoreapp2.1
+/Nabaztag.Net.Test/obj
+/Nabaztag.Simulator/bin/Debug/netcoreapp2.2
+/Nabaztag.Simulator/obj

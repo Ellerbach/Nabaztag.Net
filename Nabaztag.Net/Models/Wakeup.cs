@@ -12,10 +12,16 @@ namespace Nabaztag.Net.Models
     /// </summary>
     public class Wakeup
     {
+        /// <summary>
+        /// Type awakeup
+        /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty(PropertyName = "type")]
         public PaquetType Type { get { return PaquetType.Wakeup; } }
 
+        /// <summary>
+        /// A request id
+        /// </summary>
         [JsonProperty(PropertyName = "request_id", NullValueHandling = NullValueHandling.Ignore)]
         public string RequestId { get; set; }
     }

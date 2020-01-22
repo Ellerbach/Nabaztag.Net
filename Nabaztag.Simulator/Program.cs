@@ -13,7 +13,7 @@ namespace Nabaztag.Simulator
     {
         private static TcpListener tcpListener;
         private static List<Socket> tcpClientsList = new List<Socket>();
-        private static StateObject state = new StateObject() { State = StateType.Asleep };
+        private static NabState state = new NabState() { State = StateType.Asleep };
         private static Dictionary<string, EventType[]> eventId = new Dictionary<string, EventType[]>();
 
         static void Main(string[] args)
@@ -93,7 +93,7 @@ namespace Nabaztag.Simulator
                             var response = new Response() { Status = Status.Ok };
                             switch (res.Type)
                             {
-                                case PaquetType.Info:
+                                case PaquetType.Information:
                                     var info = JsonConvert.DeserializeObject<Info>(ret);
                                     response.RequestId = info.RequestId;
                                     SendeMessage(response, listener);
@@ -109,8 +109,8 @@ namespace Nabaztag.Simulator
                                     if (cmd.Sequence == null)
                                     {
                                         response.Status = Status.Error;
-                                        response.Message = $"{nameof(Command.Sequence)} can't be empty or null";
-                                        response.Class = "Mega error!";
+                                        response.ErrorMessage = $"{nameof(Command.Sequence)} can't be empty or null";
+                                        response.ErrorClass = "Mega error!";
                                     }
                                     SendeMessage(response, listener);
                                     break;
@@ -120,8 +120,8 @@ namespace Nabaztag.Simulator
                                     if (msg.Body == null)
                                     {
                                         response.Status = Status.Error;
-                                        response.Message = $"{nameof(Message.Body)} can't be empty or null";
-                                        response.Class = "Mega error!";
+                                        response.ErrorMessage = $"{nameof(Message.Body)} can't be empty or null";
+                                        response.ErrorClass = "Mega error!";
                                     }
                                     SendeMessage(response, listener);
                                     break;
@@ -131,8 +131,8 @@ namespace Nabaztag.Simulator
                                     if (String.IsNullOrEmpty(response.RequestId))
                                     {
                                         response.Status = Status.Error;
-                                        response.Message = $"{nameof(Cancel.RequestId)} can't be empty or null";
-                                        response.Class = "Mega error!";
+                                        response.ErrorMessage = $"{nameof(Cancel.RequestId)} can't be empty or null";
+                                        response.ErrorClass = "Mega error!";
                                     }
                                     SendeMessage(response, listener);
                                     break;
@@ -154,8 +154,8 @@ namespace Nabaztag.Simulator
                                     if (String.IsNullOrEmpty(response.RequestId))
                                     {
                                         response.Status = Status.Error;
-                                        response.Message = $"{nameof(Cancel.RequestId)} can't be empty or null";
-                                        response.Class = "Mega error!";
+                                        response.ErrorMessage = $"{nameof(Cancel.RequestId)} can't be empty or null";
+                                        response.ErrorClass = "Mega error!";
                                     }
                                     else
                                     {

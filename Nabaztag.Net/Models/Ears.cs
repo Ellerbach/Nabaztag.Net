@@ -8,18 +8,33 @@ namespace Nabaztag.Net.Models
 {
     /// <summary>
     /// {"type":"ears","request_id":request_id,"left":left_ear,"right":right_ear}
-    /// Emmiter: services
+    /// Emitter: services
     /// </summary>
     public class Ears
     {
+        /// <summary>
+        /// Type is ears
+        /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty(PropertyName = "type")]
         public PaquetType Type { get { return PaquetType.Ears; } }
-        [JsonProperty(PropertyName = "request_id")]
+
+        /// <summary>
+        /// A request id, optional
+        /// </summary>
+        [JsonProperty(PropertyName = "request_id", NullValueHandling = NullValueHandling.Ignore)]
         public string RequestId { get; set; }
-        [JsonProperty(PropertyName = "left")]
+
+        /// <summary>
+        /// Left ear position, optional
+        /// </summary>
+        [JsonProperty(PropertyName = "left", NullValueHandling = NullValueHandling.Ignore)]
         public int Left { get; set; }
-        [JsonProperty(PropertyName = "right")]
+
+        /// <summary>
+        /// Right ear position, optional
+        /// </summary>
+        [JsonProperty(PropertyName = "right", NullValueHandling = NullValueHandling.Ignore)]
         public int Right { get; set; }
     }
 }

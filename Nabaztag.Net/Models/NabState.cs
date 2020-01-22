@@ -7,22 +7,23 @@ using System.Text;
 namespace Nabaztag.Net.Models
 {
     /// <summary>
-    /// {"type":"sleep","request_id":request_id}
-    /// Emitter: services
+    /// A state type object
+    /// Emitter : nabd
     /// </summary>
-    public class Sleep
+    public class NabState
     {
         /// <summary>
-        /// Type sleep
+        /// Type is state
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty(PropertyName = "type")]
-        public PaquetType Type { get { return PaquetType.Sleep; } }
+        public PaquetType Type { get { return PaquetType.State; } }
 
         /// <summary>
-        /// 
+        /// The state
         /// </summary>
-        [JsonProperty(PropertyName = "request_id", NullValueHandling = NullValueHandling.Ignore)]
-        public string RequestId { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonProperty(PropertyName = "state", Required = Required.Always)]
+        public StateType State { get; set; }
     }
 }

@@ -11,7 +11,7 @@ namespace Nabaztag.Net.Test
         public void DeserializeStateObject()
         {
             var input = "{\"type\":\"state\",\"state\":\"idle\"}";
-            var state = JsonConvert.DeserializeObject<StateObject>(input);
+            var state = JsonConvert.DeserializeObject<NabState>(input);
             Assert.Equal(StateType.Idle, state.State);
         }
 

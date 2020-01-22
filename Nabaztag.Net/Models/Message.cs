@@ -8,22 +8,46 @@ namespace Nabaztag.Net.Models
 {
     /// <summary>
     /// {"type":"message","request_id":request_id,"signature":signature,"body":body,"cancelable":cancelable}
-    /// Emmiter: services
+    /// Emitter: services
     /// </summary>
     public class Message
     {
+        /// <summary>
+        /// The type is a message
+        /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty(PropertyName = "type")]
         public PaquetType Type { get { return PaquetType.Message; } }
-        [JsonProperty(PropertyName = "expiration")]
+
+        /// <summary>
+        /// Expiration date, optional
+        /// TODO: serialize as valid ISO 8601 dates
+        /// </summary>
+        [JsonProperty(PropertyName = "expiration", NullValueHandling = NullValueHandling.Ignore)]
         public DateTime? Expiration { get; set; }
-        [JsonProperty(PropertyName = "request_id")]
+
+        /// <summary>
+        /// A request id, optional
+        /// </summary>
+        [JsonProperty(PropertyName = "request_id", NullValueHandling = NullValueHandling.Ignore)]
         public string RequestId { get; set; }
-        [JsonProperty(PropertyName = "signature")]
+
+        /// <summary>
+        /// A signature which is a sequence, optional
+        /// </summary>
+        [JsonProperty(PropertyName = "signature", NullValueHandling = NullValueHandling.Ignore)]
         public Sequence Signature { get; set; }
-        [JsonProperty(PropertyName = "body")]
+
+        /// <summary>
+        /// A body which is a sequence
+        /// </summary>
+        [JsonProperty(PropertyName = "body", Required = Required.Always)]
         public Sequence Body { get; set; }
-        [JsonProperty(PropertyName = "cancelable")]
+
+        /// <summary>
+        /// If this is cancelable
+        /// </summary>
+        [JsonProperty(PropertyName = "cancelable", NullValueHandling = NullValueHandling.Ignore)]
         public bool? Cancelable { get; set; }
     }
 }

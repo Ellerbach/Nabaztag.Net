@@ -7,7 +7,8 @@ namespace Nabaztag.Net.Models
 {
     /// <summary>
     /// State of the rabbit
-    /// Send by the nadb server
+    /// Send by the nabd server
+    /// Emitter: nabd
     /// </summary>
     public enum StateType
     {
@@ -30,6 +31,11 @@ namespace Nabaztag.Net.Models
         /// The rabbit is playing a commmand
         /// </summary>
         [JsonProperty(PropertyName = "playing")]
-        Playing
+        Playing,
+        /// <summary>
+        /// The rabbit is recording
+        /// </summary>
+        [JsonProperty(PropertyName = "recording")]
+        Recording
     }
 }

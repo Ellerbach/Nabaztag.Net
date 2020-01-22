@@ -32,7 +32,7 @@ namespace Nabaztag.Net.Sample
             Console.WriteLine($"New button event: {buttonEvent.Event}");
         }
 
-        private static void Nabaztag_StateEvent(object sender, StateObject state)
+        private static void Nabaztag_StateEvent(object sender, NabState state)
         {
             Console.WriteLine($"Nabaztag status changed, new status is {state.State}");
         }

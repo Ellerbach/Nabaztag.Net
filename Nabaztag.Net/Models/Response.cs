@@ -8,21 +8,40 @@ namespace Nabaztag.Net.Models
     /// {"type":"response","request_id":request_id,"status":"canceled"}
     /// {"type":"response","request_id":request_id,"status":"expired"}
     /// {"type":"response","request_id":request_id,"status":"error","class":class,"message":message}
-    /// Emmiter: nadb
+    /// Emitter: nadb
     /// </summary>
     public class Response
     {
+        /// <summary>
+        /// Type is response
+        /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty(PropertyName = "type")]
         public PaquetType Type { get { return PaquetType.Response; } }
+
+        /// <summary>
+        /// A request id, optional
+        /// </summary>
         [JsonProperty(PropertyName = "request_id", NullValueHandling = NullValueHandling.Ignore)]
         public string RequestId { get; set; }
+
+        /// <summary>
+        /// The status
+        /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        [JsonProperty(PropertyName = "status")]
+        [JsonProperty(PropertyName = "status", Required = Required.Always)]
         public Status Status { get; set; }
+
+        /// <summary>
+        /// A class of error in case of error
+        /// </summary>
         [JsonProperty(PropertyName = "class", NullValueHandling = NullValueHandling.Ignore)]
-        public string Class { get; set; }
+        public string ErrorClass { get; set; }
+
+        /// <summary>
+        /// The error message in case of error
+        /// </summary>
         [JsonProperty(PropertyName = "message", NullValueHandling = NullValueHandling.Ignore)]
-        public string Message { get; set; }
+        public string ErrorMessage { get; set; }
     }
 }

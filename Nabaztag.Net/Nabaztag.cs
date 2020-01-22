@@ -22,10 +22,12 @@ namespace Nabaztag.Net
         public event EarsEventHandler EarsEvent;
         public delegate void ButtonEventHandler(object sender, ButtonEvent buttonEvent);
         public event ButtonEventHandler ButtonEvent;
-        public delegate void StateEventHandler(object sender, StateObject state);
+        public delegate void StateEventHandler(object sender, NabState state);
         public event StateEventHandler StateEvent;
+        public delegate void AsrEventHandler(object sender, AsrEvent state);
+        public event AsrEventHandler AsrEvent;
 
-        public StateObject State { get; internal set; }
+        public NabState State { get; internal set; }
 
         public Nabaztag():this("localhost", DefaultTcpPortEmmit)
         {
@@ -90,7 +92,7 @@ namespace Nabaztag.Net
         {
             var msgok = SendMessage(toSend);
             if (!msgok)
-                return new Response() { Status = Status.Error, Class = "Sending message", Message = "Error sending message, check you have TCP/IP connection" };
+                return new Response() { Status = Status.Error, ErrorClass = "Sending message", ErrorMessage = "Error sending message, check you have TCP/IP connection" };
             if (reqId == null)
                 return new Response() { Status = Status.Ok };
             DateTime exp = DateTime.Now.AddSeconds(cancelAfterSeconds);
@@ -127,7 +129,7 @@ namespace Nabaztag.Net
                         switch (ret.Type)
                         {
                             case PaquetType.State:
-                                State = JsonConvert.DeserializeObject<StateObject>(res);
+                                State = JsonConvert.DeserializeObject<NabState>(res);
                                 StateEvent?.Invoke(this, State);
                                 break;
                             case PaquetType.EarsEvent:
@@ -141,6 +143,10 @@ namespace Nabaztag.Net
                             case PaquetType.Response:
                                 var response = JsonConvert.DeserializeObject<Response>(res);
                                 _LastRequestId[response.RequestId] = response;
+                                break;
+                            case PaquetType.AsrEvent:
+                                var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(res);
+                                AsrEvent?.Invoke(this, asrEvent);
                                 break;
                             default:
                                 break;

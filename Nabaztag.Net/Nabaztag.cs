@@ -65,7 +65,6 @@ namespace Nabaztag.Net
         /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
         /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefintely</param>
         /// <returns>Response object</returns>
-
         public Response Sleep(bool needRequestId = true, int cancelAfterSeconds = -1)
         {
             var sleep = new Sleep();
@@ -78,6 +77,11 @@ namespace Nabaztag.Net
             }
             return SendMessageProcessResponse(JsonConvert.SerializeObject(sleep), reqId, cancelAfterSeconds);
         }
+
+        //public Response Command(bool needRequestId = true, int cancelAfterSeconds = -1)
+        //{
+
+        //}
 
         private bool SendMessage(string message)
         {

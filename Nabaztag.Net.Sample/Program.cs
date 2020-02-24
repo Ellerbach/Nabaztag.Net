@@ -8,16 +8,22 @@ namespace Nabaztag.Net.Sample
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");            
-            Nabaztag nabaztag = new Nabaztag();
+            Console.WriteLine("Hello Nabaztag!");
+            Nabaztag nabaztag = new Nabaztag("192.168.1.145", 10543);
             nabaztag.StateEvent += Nabaztag_StateEvent;
             nabaztag.ButtonEvent += Nabaztag_ButtonEvent;
             nabaztag.EarsEvent += Nabaztag_EarsEvent;
-            var resp = nabaztag.Wakeup();
+            var resp = nabaztag.Sleep();
+            if (resp.Status == Status.Ok)
+                Console.WriteLine("Your Nabaztag is sleeping");
+            else
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+            
+            resp = nabaztag.Wakeup();
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is awake");
             else
-                Console.WriteLine("Something wrong happened :-(");
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
             Console.ReadKey();
         }

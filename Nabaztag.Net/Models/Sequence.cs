@@ -26,6 +26,6 @@ namespace Nabaztag.Net.Models
         /// * "urn:x-chor:streaming:N" to stream a choreography with a specific color N
         /// </summary>
         [JsonProperty(PropertyName = "choreography", NullValueHandling = NullValueHandling.Ignore)]
-        public string Choreography { get; set; }
+        public string Choreography { get; set; }                             
     }
 }

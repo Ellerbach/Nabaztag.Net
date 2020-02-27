@@ -78,10 +78,19 @@ namespace Nabaztag.Net
             return SendMessageProcessResponse(JsonConvert.SerializeObject(sleep), reqId, cancelAfterSeconds);
         }
 
-        //public Response Command(bool needRequestId = true, int cancelAfterSeconds = -1)
-        //{
-
-        //}
+        public Response Command(Sequence sequence, bool needRequestId = true, int cancelAfterSeconds = -1)
+        {
+            var command = new Command();
+            Guid reqId;
+            if (needRequestId)
+            {
+                reqId = Guid.NewGuid();
+                _LastRequestId.Add(reqId.ToString(), null);
+                command.RequestId = reqId.ToString();
+            }
+            command.Sequence = sequence;
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(command), reqId, cancelAfterSeconds);
+        }
 
         private bool SendMessage(string message)
         {

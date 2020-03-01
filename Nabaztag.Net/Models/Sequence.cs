@@ -14,10 +14,10 @@ namespace Nabaztag.Net.Models
         /// An audio list can be:
         /// * a path of sound separated by ; example: "nabmastodon/communion.wav;otherpath/othersound.mp3". 
         ///   if the sound resource end with "*" or "*.suffixe", a random sound is played in this resource
-        /// * a text to speech: "tts:language,text"
+        /// * a text to speech: "tts:language,text" => not anymore into the doc!
         /// </summary>
-        [JsonProperty(PropertyName = "audio_list", NullValueHandling = NullValueHandling.Ignore)]
-        public string AudioList { get; set; }
+        [JsonProperty(PropertyName = "audio", NullValueHandling = NullValueHandling.Ignore)]
+        public string[] AudioList { get; set; }
 
         /// <summary>
         /// A choreography list can be:
@@ -26,6 +26,6 @@ namespace Nabaztag.Net.Models
         /// * "urn:x-chor:streaming:N" to stream a choreography with a specific color N
         /// </summary>
         [JsonProperty(PropertyName = "choreography", NullValueHandling = NullValueHandling.Ignore)]
-        public string Choreography { get; set; }                             
+        public string[] ChoreographyList { get; set; }                             
     }
 }

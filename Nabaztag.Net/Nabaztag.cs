@@ -44,7 +44,7 @@ namespace Nabaztag.Net
         /// Wakeup the Nabaztag
         /// </summary>
         /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
-        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefintely</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
         /// <returns>Response object</returns>
         public Response Wakeup(bool needRequestId = true, int cancelAfterSeconds = -1)
         {
@@ -63,7 +63,7 @@ namespace Nabaztag.Net
         /// Tell the Nabaztag to sleep
         /// </summary>
         /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
-        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefintely</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
         /// <returns>Response object</returns>
         public Response Sleep(bool needRequestId = true, int cancelAfterSeconds = -1)
         {
@@ -78,6 +78,13 @@ namespace Nabaztag.Net
             return SendMessageProcessResponse(JsonConvert.SerializeObject(sleep), reqId, cancelAfterSeconds);
         }
 
+        /// <summary>
+        /// Send a command with specific choreography(ies) and audio(s)
+        /// </summary>
+        /// <param name="sequence">A sequence class</param>
+        /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
+        /// <returns>Response object</returns>
         public Response Command(Sequence sequence, bool needRequestId = true, int cancelAfterSeconds = -1)
         {
             var command = new Command();
@@ -90,6 +97,64 @@ namespace Nabaztag.Net
             }
             command.Sequence = sequence;
             return SendMessageProcessResponse(JsonConvert.SerializeObject(command), reqId, cancelAfterSeconds);
+        }
+
+        /// <summary>
+        /// Send a message command
+        /// </summary>
+        /// <param name="signature">the signature sequence, audio will be played first</param>
+        /// <param name="body">the body sequence</param>
+        /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
+        /// <returns>Response object</returns>
+        public Response Message(Sequence signature, Sequence body, bool needRequestId = true, int cancelAfterSeconds = -1)
+        {
+            var command = new Message();
+            Guid reqId;
+            if (needRequestId)
+            {
+                reqId = Guid.NewGuid();
+                _LastRequestId.Add(reqId.ToString(), null);
+                command.RequestId = reqId.ToString();
+            }
+            command.Signature= signature;
+            command.Body = body;
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(command), reqId, cancelAfterSeconds);
+        }
+
+        /// <summary>
+        /// Set the mode for the application
+        /// </summary>
+        /// <param name="modeType">the mode to set the service in</param>
+        /// <param name="eventType">set the event types and call backs</param>
+        /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
+        /// <returns>Response object</returns>
+        public Response EventMode(ModeType modeType, EventType[] eventType, bool needRequestId = true, int cancelAfterSeconds = -1)
+        {
+            var eventMode = new EventMode();
+            Guid reqId;
+            if (needRequestId)
+            {
+                reqId = Guid.NewGuid();
+                _LastRequestId.Add(reqId.ToString(), null);
+                eventMode.RequestId = reqId.ToString();
+            }
+            eventMode.Events = eventType;
+            eventMode.Mode = modeType;
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(eventMode), reqId, cancelAfterSeconds);
+        }
+
+        /// <summary>
+        /// Cancel a request id
+        /// </summary>
+        /// <param name="requestId">the request id to cancel</param>
+        /// <returns>Response object</returns>
+        public Response Cancel(string requestId)
+        {
+            Cancel cancel = new Cancel() { RequestId = requestId };
+            // We don't need a guid and we don't need to wait
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(cancel), new Guid(), -1);
         }
 
         private bool SendMessage(string message)
@@ -127,7 +192,7 @@ namespace Nabaztag.Net
 
         private void ProcessIncoming()
         {
-            //Listen to tcp
+            // Listen to tcp
             while (true)
             {
                 var received = _TcpClient.Available;

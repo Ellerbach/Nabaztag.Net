@@ -19,6 +19,11 @@ namespace Nabaztag.Net.Models
         /// Ears
         /// </summary>
         [JsonProperty(PropertyName = "ears")]
-        Ears
+        Ears,
+        /// <summary>
+        /// Asr
+        /// </summary>
+        [JsonProperty(PropertyName = "asr")]
+        Asr
     }
 }

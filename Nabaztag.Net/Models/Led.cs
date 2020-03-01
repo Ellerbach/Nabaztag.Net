@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Nabaztag.Net.Models
@@ -8,26 +9,31 @@ namespace Nabaztag.Net.Models
     /// Enum for the Led on the rabbit
     /// </summary>
     public enum Led 
-    { 
+    {
         /// <summary>
         /// Nose
         /// </summary>
-        Nose, 
+        [EnumMember(Value = "nose")]
+        Nose,
         /// <summary>
         /// Right
         /// </summary>
-        Right, 
+        [EnumMember(Value = "right")]
+        Right,
         /// <summary>
         /// Center
         /// </summary>
-        Center, 
+        [EnumMember(Value = "center")]
+        Center,
         /// <summary>
         /// Left
         /// </summary>
-        Left, 
+        [EnumMember(Value = "left")]
+        Left,
         /// <summary>
         /// Bottom
         /// </summary>
+        [EnumMember(Value = "bottom")]
         Bottom 
     }
 }

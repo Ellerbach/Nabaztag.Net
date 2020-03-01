@@ -28,7 +28,7 @@ namespace Nabaztag.Net.Models
         [JsonProperty(PropertyName = "interactive")]
         Interactive,
         /// <summary>
-        /// The rabbit is playing a commmand
+        /// The rabbit is playing a command
         /// </summary>
         [JsonProperty(PropertyName = "playing")]
         Playing,

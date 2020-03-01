@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+﻿// Licensed to Laurent Ellerbach under one or more agreements.
+// Laurent Ellerbach licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Nabaztag.Net.Models
 {
@@ -16,7 +17,7 @@ namespace Nabaztag.Net.Models
         /// What has been understand by the NLU
         /// </summary>
         [JsonProperty(PropertyName = "nlu")]
-        public string Nlu { get; set; }
+        public Nlu Nlu { get; set; }
 
         /// <summary>
         /// The timestamp

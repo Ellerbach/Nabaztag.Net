@@ -2,24 +2,20 @@
 // Laurent Ellerbach licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Nabaztag.Net.Models
 {
     /// <summary>
-    /// The Ear enum
+    /// Class for Asr events representing one intent
+    /// {'intent': intent}
     /// </summary>
-    public enum Ear 
+    public class Nlu
     {
         /// <summary>
-        /// Right
+        /// Intent
         /// </summary>
-        [EnumMember(Value = "right")]
-        Right,
-        /// <summary>
-        /// Left
-        /// </summary>
-        [EnumMember(Value = "left")]
-        Left 
+        [JsonProperty(PropertyName = "intent")]
+        public string Intent { get; set; }
     }
 }

@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Licensed to Laurent Ellerbach under one or more agreements.
+// Laurent Ellerbach licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System.Runtime.Serialization;
-using System.Text;
 
 namespace Nabaztag.Net.Models
 {

@@ -1,12 +1,14 @@
-﻿using Nabaztag.Net.Models;
+﻿// Licensed to Laurent Ellerbach under one or more agreements.
+// Laurent Ellerbach licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using Nabaztag.Net.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Nabaztag.Net
@@ -30,14 +32,12 @@ namespace Nabaztag.Net
         public NabState State { get; internal set; }
 
         public Nabaztag():this("localhost", DefaultTcpPortEmmit)
-        {
-        }
+        { }
 
         public Nabaztag(string hostName, int tcpPort)
         {
             _TcpClient = new TcpClient(hostName, tcpPort);
             Task.Factory.StartNew(() => ProcessIncoming());
-
         }
 
         /// <summary>

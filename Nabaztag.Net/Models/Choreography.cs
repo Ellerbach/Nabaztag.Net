@@ -1,10 +1,13 @@
-﻿using System;
+﻿// Licensed to Laurent Ellerbach under one or more agreements.
+// Laurent Ellerbach licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Nabaztag.Net.Models
 {
@@ -14,8 +17,7 @@ namespace Nabaztag.Net.Models
     public class Choreography
     {
         /// <summary>
-        /// Used for the serialization into base 64.
-        /// From the python source code
+        /// Used for the serialization of choreography files.
         /// </summary>
         private enum OpCode
         {
@@ -24,14 +26,13 @@ namespace Nabaztag.Net.Models
             SetLedColor = 7,
             SetMotor = 8,
             SetLedsColor = 9,
-            SetLedoff = 10,
+            SetLedOff = 10,
             SetLedPalette = 14,
             RandomMidi = 16,
             Avance = 17,
             Ifne = 18,
             Attentte = 19,
             SetMotorDirection = 20,
-            End = 255,
         }
 
         private List<byte> _choreography = new List<byte>();
@@ -156,10 +157,10 @@ namespace Nabaztag.Net.Models
         /// <param name="ear">The ear to move</param>
         /// <param name="steps">the steps from -17 to +17</param>
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
-        public void MoveEarRElative(Ear ear, int steps, byte waitDurationTimeframeMultiple = 0)
+        public void MoveEarRelative(Ear ear, byte steps, byte waitDurationTimeframeMultiple = 0)
         {
             byte[] chrono = new byte[] {
-                waitDurationTimeframeMultiple, (byte)OpCode.Avance, (byte)ear, (byte)(steps > 0 ? 0 : 1), (byte)(steps > 0 ? steps : -steps),
+                waitDurationTimeframeMultiple, (byte)OpCode.Avance, (byte)ear, steps,
             };
 
             _choreography.Concat(chrono);
@@ -175,7 +176,7 @@ namespace Nabaztag.Net.Models
         {
 
             byte[] chrono = new byte[] {
-                waitDurationTimeframeMultiple, (byte)OpCode.SetMotorDirection, (byte)(forward ? 0:1),
+                waitDurationTimeframeMultiple, (byte)OpCode.SetMotorDirection, (byte)(forward ? 0 : 1),
             };
 
             _choreography.Concat(chrono);
@@ -256,7 +257,7 @@ namespace Nabaztag.Net.Models
         public void SetLedOff(Led led, byte waitDurationTimeframeMultiple = 0)
         {
             _choreography.Concat(new byte[] {
-                waitDurationTimeframeMultiple,  (byte)OpCode.SetLedoff, (byte)led,
+                waitDurationTimeframeMultiple,  (byte)OpCode.SetLedOff, (byte)led,
             });
         }
 
@@ -282,16 +283,17 @@ namespace Nabaztag.Net.Models
         }
 
         /// <summary>
-        /// Set Ifne, not clear what it does!
+        /// Set Ifne, This is to allow multiple choreography in the same file
+        /// It's used byt the Tai Chi
         /// </summary>
-        /// <param name="value1">tbd</param>
-        /// <param name="value2">tbd</param>
-        /// <param name="value3">tbd</param>
+        /// <param name="ifneNumber">The number of Ifne</param>
+        /// <param name="sizeOfBlock">The size of the Ifne block</param>
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
-        public void SetIfne(byte value1, byte value2, byte value3, byte waitDurationTimeframeMultiple = 0)
+        public void SetIfne(byte ifneNumber, int sizeOfBlock, byte waitDurationTimeframeMultiple = 0)
         {
+            // Should use for the conversion BinaryPrimitives but coding offline            
             _choreography.Concat(new byte[] {
-                waitDurationTimeframeMultiple,  (byte)OpCode.Ifne, value1, value2, value3,
+                waitDurationTimeframeMultiple,  (byte)OpCode.Ifne, ifneNumber, (byte)(sizeOfBlock >> 8), (byte)(sizeOfBlock & 0xFF),
             });
         }
 

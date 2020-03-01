@@ -24,7 +24,8 @@
     <None Update="taichi.chor">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-
+    <Compile Include="..\..\Nabaztag.Net\Models\Led.cs" />
+    <Compile Include="..\..\Nabaztag.Net\Models\Ear.cs" />
   </ItemGroup>
 
 </Project>

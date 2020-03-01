@@ -1,19 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿// Licensed to Laurent Ellerbach under one or more agreements.
+// Laurent Ellerbach licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Nabaztag.Net.Models
 {
     /// <summary>
     /// {"type":"wakeup","request_id":request_id}
-    /// Emmiter: services
+    /// Emitter: services
     /// </summary>
     public class Wakeup
     {
         /// <summary>
-        /// Type awakeup
+        /// Type wakeup
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty(PropertyName = "type")]

@@ -4,6 +4,7 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
 
 namespace Nabaztag.Net.Models
 {
@@ -36,8 +37,7 @@ namespace Nabaztag.Net.Models
         /// <summary>
         /// The event type
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
-        [JsonProperty(PropertyName = "events")]
-        public EventType[] Events { get; set; }
+        [JsonProperty(ItemConverterType = typeof(StringEnumConverter), PropertyName = "events")]
+        public IEnumerable<EventType> Events { get; set; }
     }
 }

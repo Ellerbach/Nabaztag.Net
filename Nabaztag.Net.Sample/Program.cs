@@ -59,17 +59,17 @@ namespace Nabaztag.Net.Sample
 
             // Playing a Choreography and streaming music
             Sequence seq = new Sequence();
-            seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
-            seq.AudioList = new string[] { "nabsurprised/respirations/Respiration01.mp3" };
-            // set this one with a timeout
-            resp = nabaztag.Command(seq, true, 30);
-            if (resp.Status == Status.Ok)
-                Console.WriteLine("Your Nabaztag is doing a respiration and a small choreography");
-            else
-                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+            //seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
+            //seq.AudioList = new string[] { "nabsurprised/respirations/Respiration01.mp3" };
+            //// set this one with a timeout
+            //resp = nabaztag.Command(seq, true, 30);
+            //if (resp.Status == Status.Ok)
+            //    Console.WriteLine("Your Nabaztag is doing a respiration and a small choreography");
+            //else
+            //    Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
-            Console.WriteLine($"Waiting {TimeToWaitBetweenOperationsMilliseconds } milliseconds");
-            Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
+            //Console.WriteLine($"Waiting {TimeToWaitBetweenOperationsMilliseconds } milliseconds");
+            //Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
             // Reset all events
 
             Console.WriteLine("Rest all events");

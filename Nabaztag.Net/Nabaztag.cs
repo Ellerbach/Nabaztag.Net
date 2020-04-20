@@ -142,7 +142,9 @@ namespace Nabaztag.Net
             }
             eventMode.Events = eventType;
             eventMode.Mode = modeType;
-            return SendMessageProcessResponse(JsonConvert.SerializeObject(eventMode), reqId, cancelAfterSeconds);
+
+            var ser = JsonConvert.SerializeObject(eventMode);
+            return SendMessageProcessResponse(ser, reqId, cancelAfterSeconds);
         }
 
         /// <summary>

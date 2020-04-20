@@ -6,6 +6,7 @@ using Nabaztag.Net.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -165,11 +166,11 @@ namespace Nabaztag.Simulator
                                     {
                                         if (eventId.ContainsKey(response.RequestId))
                                         {
-                                            eventId[response.RequestId] = mode.Events;
+                                            eventId[response.RequestId] = mode.Events.ToArray();
                                         }
                                         else
                                         {
-                                            eventId.Add(response.RequestId, mode.Events);
+                                            eventId.Add(response.RequestId, mode.Events.ToArray());
                                         }
                                     }
                                     SendeMessage(response, listener);

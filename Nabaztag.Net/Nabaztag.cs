@@ -107,7 +107,7 @@ namespace Nabaztag.Net
         /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
         /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
         /// <returns>Response object</returns>
-        public Response Message(Sequence signature, Sequence body, bool needRequestId = true, int cancelAfterSeconds = -1)
+        public Response Message(Sequence signature, Sequence[] body, DateTime expiracy, bool needRequestId = true, int cancelAfterSeconds = -1)
         {
             var command = new Message();
             Guid reqId;
@@ -117,6 +117,12 @@ namespace Nabaztag.Net
                 _LastRequestId.Add(reqId.ToString(), null);
                 command.RequestId = reqId.ToString();
             }
+
+            if (expiracy != DateTime.MinValue)
+            {
+                command.Expiration = expiracy;
+            }
+
             command.Signature = signature;
             command.Body = body;
             return SendMessageProcessResponse(JsonConvert.SerializeObject(command), reqId, cancelAfterSeconds);
@@ -140,10 +146,9 @@ namespace Nabaztag.Net
                 _LastRequestId.Add(reqId.ToString(), null);
                 eventMode.RequestId = reqId.ToString();
             }
+
             eventMode.Events = eventType;
             eventMode.Mode = modeType;
-
-
             var ser = JsonConvert.SerializeObject(eventMode);
             ser = ser.ToLower();
             return SendMessageProcessResponse(ser, reqId, cancelAfterSeconds);
@@ -161,6 +166,20 @@ namespace Nabaztag.Net
             return SendMessageProcessResponse(JsonConvert.SerializeObject(cancel), new Guid(), -1);
         }
 
+        public Response Test(TestType testType, bool needRequestId = true, int cancelAfterSeconds = -1)
+        {
+            TestMode test = new TestMode() { Test = testType };
+            Guid reqId;
+            if (needRequestId)
+            {
+                reqId = Guid.NewGuid();
+                _LastRequestId.Add(reqId.ToString(), null);
+                test.RequestId = reqId.ToString();
+            }
+
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(test), reqId, cancelAfterSeconds);
+        }
+
         private bool SendMessage(string message)
         {
             if (!_TcpClient.Client.Connected)
@@ -175,14 +194,14 @@ namespace Nabaztag.Net
             var msgok = SendMessage(toSend);
             if (!msgok)
                 return new Response() { Status = Status.Error, ErrorClass = "Sending message", ErrorMessage = "Error sending message, check you have TCP/IP connection" };
-            if (reqId == null)
+            if (reqId == Guid.Empty)
                 return new Response() { Status = Status.Ok };
             DateTime exp = DateTime.Now.AddSeconds(cancelAfterSeconds);
             bool isExpired = false;
             while ((_LastRequestId[reqId.ToString()] == null)
                 || (isExpired))
             {
-                isExpired = (exp > DateTime.Now) && (cancelAfterSeconds > 0);
+                isExpired = (exp < DateTime.Now) && (cancelAfterSeconds > 0);
             }
             if (isExpired)
             {
@@ -190,7 +209,7 @@ namespace Nabaztag.Net
                 Debug.WriteLine("Expiration");
                 return new Response() { Status = Status.Expired };
             }
-            Console.WriteLine($"Response received: {_LastRequestId[reqId.ToString()].Status}");
+            Debug.WriteLine($"Response received: {_LastRequestId[reqId.ToString()].Status}");
             return _LastRequestId[reqId.ToString()];
         }
 
@@ -230,7 +249,11 @@ namespace Nabaztag.Net
                                         break;
                                     case PaquetType.Response:
                                         var response = JsonConvert.DeserializeObject<Response>(res);
-                                        _LastRequestId[response.RequestId] = response;
+                                        if (response.RequestId != null)
+                                        {
+                                            _LastRequestId[response.RequestId] = response;
+                                        }
+
                                         break;
                                     case PaquetType.AsrEvent:
                                         var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(res);

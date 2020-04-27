@@ -88,6 +88,12 @@ namespace Nabaztag.Net.Models
         /// </summary>
         [EnumMember(Value = "asr_event")]
         [JsonProperty(PropertyName = "asr_event")]
-        AsrEvent
+        AsrEvent,
+        /// <summary>
+        /// Asr event
+        /// </summary>
+        [EnumMember(Value = "test")]
+        [JsonProperty(PropertyName = "test")]
+        Test
     }
 }

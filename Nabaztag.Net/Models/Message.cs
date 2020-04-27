@@ -44,7 +44,7 @@ namespace Nabaztag.Net.Models
         /// A body which is a sequence
         /// </summary>
         [JsonProperty(PropertyName = "body", Required = Required.Always)]
-        public Sequence Body { get; set; }
+        public Sequence[] Body { get; set; }
 
         /// <summary>
         /// If this is cancelable

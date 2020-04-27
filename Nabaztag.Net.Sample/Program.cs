@@ -39,6 +39,12 @@ namespace Nabaztag.Net.Sample
             else
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
+            // Test ears and leds
+            Console.WriteLine("Test ears");
+            nabaztag.Test(TestType.Ears);
+            Console.WriteLine("Test leds");
+            nabaztag.Test(TestType.Leds);
+
             // Set interactive mode and all the events
             Console.WriteLine("Setting interactive mode and all events, press a key to change mode");
             resp = nabaztag.EventMode(ModeType.Interactive, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr });
@@ -49,7 +55,7 @@ namespace Nabaztag.Net.Sample
 
             Console.ReadKey();
 
-            Console.WriteLine("Setting up Idle mode and all events, press a key to change mode");
+            //Console.WriteLine("Setting up Idle mode and all events, press a key to change mode");
             resp = nabaztag.EventMode(ModeType.Idle, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr });
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is in interactive mode and will receive all events");
@@ -58,9 +64,10 @@ namespace Nabaztag.Net.Sample
 
             Console.ReadKey();
 
-            // Playing a Choreography and streaming music
-            Sequence seq = new Sequence();
-            //seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
+            //// Playing a Choreography and streaming music
+            //Sequence seq = new Sequence();
+            ////seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
+            ////seq.ChoreographyList = CreateChoreography().SerializeChoreography();
             //seq.AudioList = new string[] { "nabsurprised/respirations/Respiration01.mp3" };
             //// set this one with a timeout
             //resp = nabaztag.Command(seq, true, 30);
@@ -71,8 +78,24 @@ namespace Nabaztag.Net.Sample
 
             //Console.WriteLine($"Waiting {TimeToWaitBetweenOperationsMilliseconds } milliseconds");
             //Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
-            // Reset all events
 
+            Console.WriteLine("Playing meteo: Today strom, 25 degrees");
+            var signature = new Sequence() { AudioList = new string[] { "nabweatherd/signature.mp3" } };
+            var body = new Sequence[] { new Sequence() { AudioList = new string[] { "nabweatherd/today.mp3", "nabweatherd/sky/stormy.mp3", "nabweatherd/temp/25.mp3", "nabweatherd/degree.mp3" } } };
+            resp = nabaztag.Message(signature, body, DateTime.MinValue);            
+            if (resp.Status == Status.Ok)
+                Console.WriteLine("List played properly");
+            else
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+
+            Console.WriteLine("Trying to the same meteo but with an exprired resquest. Nothing should be played");
+            resp = nabaztag.Message(signature, body, DateTime.Now.AddDays(-1));
+            if (resp.Status == Status.Expired)
+                Console.WriteLine("As planned, this request has expired");
+            else
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+
+            //Reset all events
             Console.WriteLine("Rest all events");
             resp = nabaztag.EventMode(ModeType.Idle, new EventType[] { });
             if (resp.Status == Status.Ok)
@@ -89,12 +112,12 @@ namespace Nabaztag.Net.Sample
 
         private static void Nabaztag_EarsEvent(object sender, EarsEvent ears)
         {
-            Console.WriteLine($"New ear event. Left: {ears.Left} Right: {ears.Right} Ear: {ears.Ear}");
+            Console.WriteLine($"New ear event. Left: {ears.Left} Right: {ears.Right} Ear: {ears.Ear}, Time: {ears.Time}");
         }
 
         private static void Nabaztag_ButtonEvent(object sender, ButtonEvent buttonEvent)
         {
-            Console.WriteLine($"New button event: {buttonEvent.Event}");
+            Console.WriteLine($"New button event: {buttonEvent.Event}, Time: {buttonEvent.Time}");
         }
 
         private static void Nabaztag_StateEvent(object sender, NabState state)

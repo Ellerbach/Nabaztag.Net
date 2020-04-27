@@ -19,6 +19,7 @@ namespace Nabaztag.Net.Sample
             nabaztag.StateEvent += Nabaztag_StateEvent;
             nabaztag.ButtonEvent += Nabaztag_ButtonEvent;
             nabaztag.EarsEvent += Nabaztag_EarsEvent;
+            nabaztag.AsrEvent += Nabaztag_AsrEvent;
 
             // Asking Nabaztag to sleep
             Console.WriteLine("Nabaztag, please sleep :-)");
@@ -81,9 +82,14 @@ namespace Nabaztag.Net.Sample
 
         }
 
+        private static void Nabaztag_AsrEvent(object sender, AsrEvent state)
+        {
+            Console.WriteLine($"New asr event. Intent: {state.Nlu.Intent}, Time: {state.Time}");
+        }
+
         private static void Nabaztag_EarsEvent(object sender, EarsEvent ears)
         {
-            Console.WriteLine($"New ear event. Left: ${ears.Left} Right: {ears.Right} Ear: {ears.Ear}");
+            Console.WriteLine($"New ear event. Left: {ears.Left} Right: {ears.Right} Ear: {ears.Ear}");
         }
 
         private static void Nabaztag_ButtonEvent(object sender, ButtonEvent buttonEvent)

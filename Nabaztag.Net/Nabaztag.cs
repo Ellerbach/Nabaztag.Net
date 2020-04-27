@@ -145,6 +145,7 @@ namespace Nabaztag.Net
 
 
             var ser = JsonConvert.SerializeObject(eventMode);
+            ser = ser.ToLower();
             return SendMessageProcessResponse(ser, reqId, cancelAfterSeconds);
         }
 

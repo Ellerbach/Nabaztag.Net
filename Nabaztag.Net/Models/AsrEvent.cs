@@ -23,6 +23,6 @@ namespace Nabaztag.Net.Models
         /// The timestamp
         /// </summary>
         [JsonProperty(PropertyName = "time")]
-        public DateTime Time { get; set; }
+        public string Time { get; set; }
     }
 }

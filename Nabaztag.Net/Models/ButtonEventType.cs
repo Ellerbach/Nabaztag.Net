@@ -28,6 +28,11 @@ namespace Nabaztag.Net.Models
         [JsonProperty(PropertyName = "click")]
         Click,
         /// <summary>
+        /// Button is clicked
+        /// </summary>
+        [JsonProperty(PropertyName = "hold")]
+        Hold,
+        /// <summary>
         /// Button is double clicked
         /// </summary>
         [EnumMember(Value = "double_click")]

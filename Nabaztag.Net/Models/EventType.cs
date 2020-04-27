@@ -3,17 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Nabaztag.Net.Models
 {
     /// <summary>
     /// Event type
-    /// </summary>
+    /// </summary>    
     public enum EventType
     {
         /// <summary>
         /// Button
-        /// </summary>
+        /// </summary>   
         [JsonProperty(PropertyName = "button")]
         Button,
         /// <summary>

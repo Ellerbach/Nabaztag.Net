@@ -4,6 +4,7 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Runtime.Serialization;
 
 namespace Nabaztag.Net.Models
 {
@@ -15,16 +16,19 @@ namespace Nabaztag.Net.Models
         /// <summary>
         /// Button
         /// </summary>   
+        [EnumMember(Value = "button")]
         [JsonProperty(PropertyName = "button")]
         Button,
         /// <summary>
         /// Ears
         /// </summary>
+        [EnumMember(Value = "ears")]
         [JsonProperty(PropertyName = "ears")]
         Ears,
         /// <summary>
         /// Asr
         /// </summary>
+        [EnumMember(Value = "asr")]
         [JsonProperty(PropertyName = "asr")]
         Asr
     }

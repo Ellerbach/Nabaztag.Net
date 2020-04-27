@@ -31,7 +31,7 @@ namespace Nabaztag.Net
 
         public NabState State { get; internal set; }
 
-        public Nabaztag():this("localhost", DefaultTcpPortEmmit)
+        public Nabaztag() : this("localhost", DefaultTcpPortEmmit)
         { }
 
         public Nabaztag(string hostName, int tcpPort)
@@ -117,7 +117,7 @@ namespace Nabaztag.Net
                 _LastRequestId.Add(reqId.ToString(), null);
                 command.RequestId = reqId.ToString();
             }
-            command.Signature= signature;
+            command.Signature = signature;
             command.Body = body;
             return SendMessageProcessResponse(JsonConvert.SerializeObject(command), reqId, cancelAfterSeconds);
         }
@@ -143,9 +143,8 @@ namespace Nabaztag.Net
             eventMode.Events = eventType;
             eventMode.Mode = modeType;
 
-            
+
             var ser = JsonConvert.SerializeObject(eventMode);
-            ser = ser.ToLower();
             return SendMessageProcessResponse(ser, reqId, cancelAfterSeconds);
         }
 
@@ -205,38 +204,46 @@ namespace Nabaztag.Net
                     byte[] buffer = new byte[received];
                     received = _TcpClient.GetStream().ReadAsync(buffer, 0, received).GetAwaiter().GetResult();
                     var res = Encoding.UTF8.GetString(buffer, 0, received); // text coming from TCP listener
-                    try
+                    res = res.Replace("\n", "");
+                    var results = res.Split('\r');
+                    foreach (var result in results)
                     {
-                        var ret = JsonConvert.DeserializeObject<Paquet>(res);
-                        switch (ret.Type)
+                        if (!string.IsNullOrEmpty(result))
                         {
-                            case PaquetType.State:
-                                State = JsonConvert.DeserializeObject<NabState>(res);
-                                StateEvent?.Invoke(this, State);
-                                break;
-                            case PaquetType.EarsEvent:
-                                var earsEvent = JsonConvert.DeserializeObject<EarsEvent>(res);
-                                EarsEvent?.Invoke(this, earsEvent);
-                                break;
-                            case PaquetType.ButtonEvent:
-                                var buttonEvent = JsonConvert.DeserializeObject<ButtonEvent>(res);
-                                ButtonEvent?.Invoke(this, buttonEvent);
-                                break;
-                            case PaquetType.Response:
-                                var response = JsonConvert.DeserializeObject<Response>(res);
-                                _LastRequestId[response.RequestId] = response;
-                                break;
-                            case PaquetType.AsrEvent:
-                                var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(res);
-                                AsrEvent?.Invoke(this, asrEvent);
-                                break;
-                            default:
-                                break;
+                            try
+                            {
+                                var ret = JsonConvert.DeserializeObject<Paquet>(result);
+                                switch (ret.Type)
+                                {
+                                    case PaquetType.State:
+                                        State = JsonConvert.DeserializeObject<NabState>(res);
+                                        StateEvent?.Invoke(this, State);
+                                        break;
+                                    case PaquetType.EarsEvent:
+                                        var earsEvent = JsonConvert.DeserializeObject<EarsEvent>(res);
+                                        EarsEvent?.Invoke(this, earsEvent);
+                                        break;
+                                    case PaquetType.ButtonEvent:
+                                        var buttonEvent = JsonConvert.DeserializeObject<ButtonEvent>(res);
+                                        ButtonEvent?.Invoke(this, buttonEvent);
+                                        break;
+                                    case PaquetType.Response:
+                                        var response = JsonConvert.DeserializeObject<Response>(res);
+                                        _LastRequestId[response.RequestId] = response;
+                                        break;
+                                    case PaquetType.AsrEvent:
+                                        var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(res);
+                                        AsrEvent?.Invoke(this, asrEvent);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                            }
                         }
-                    }
-                    catch (Exception)
-                    {
-                        ;
                     }
                 }
             }

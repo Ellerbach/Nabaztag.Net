@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
 namespace Nabaztag.Net.Models
 {
@@ -29,11 +30,13 @@ namespace Nabaztag.Net.Models
         /// <summary>
         /// Button is double clicked
         /// </summary>
+        [EnumMember(Value = "double_click")]
         [JsonProperty(PropertyName = "double_click")]
         DoubleClick,
         /// <summary>
         /// Button is click and hold
         /// </summary>
+        [EnumMember(Value = "click_and_hold")]
         [JsonProperty(PropertyName = "click_and_hold")]
         ClickAndHold
     }

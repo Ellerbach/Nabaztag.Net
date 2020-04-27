@@ -236,19 +236,19 @@ namespace Nabaztag.Net
                                 switch (ret.Type)
                                 {
                                     case PaquetType.State:
-                                        State = JsonConvert.DeserializeObject<NabState>(res);
+                                        State = JsonConvert.DeserializeObject<NabState>(result);
                                         StateEvent?.Invoke(this, State);
                                         break;
                                     case PaquetType.EarsEvent:
-                                        var earsEvent = JsonConvert.DeserializeObject<EarsEvent>(res);
+                                        var earsEvent = JsonConvert.DeserializeObject<EarsEvent>(result);
                                         EarsEvent?.Invoke(this, earsEvent);
                                         break;
                                     case PaquetType.ButtonEvent:
-                                        var buttonEvent = JsonConvert.DeserializeObject<ButtonEvent>(res);
+                                        var buttonEvent = JsonConvert.DeserializeObject<ButtonEvent>(result);
                                         ButtonEvent?.Invoke(this, buttonEvent);
                                         break;
                                     case PaquetType.Response:
-                                        var response = JsonConvert.DeserializeObject<Response>(res);
+                                        var response = JsonConvert.DeserializeObject<Response>(result);
                                         if (response.RequestId != null)
                                         {
                                             _LastRequestId[response.RequestId] = response;
@@ -256,7 +256,7 @@ namespace Nabaztag.Net
 
                                         break;
                                     case PaquetType.AsrEvent:
-                                        var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(res);
+                                        var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(result);
                                         AsrEvent?.Invoke(this, asrEvent);
                                         break;
                                     default:

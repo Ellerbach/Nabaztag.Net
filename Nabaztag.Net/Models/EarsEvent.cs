@@ -29,5 +29,11 @@ namespace Nabaztag.Net.Models
         /// </summary>
         [JsonProperty(PropertyName = "ear")]
         public int? Ear { get; set; }
+
+        /// <summary>
+        /// The timestamp
+        /// </summary>
+        [JsonProperty(PropertyName = "time")]
+        public string Time { get; set; }
     }
 }

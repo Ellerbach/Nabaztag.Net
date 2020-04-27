@@ -25,5 +25,11 @@ namespace Nabaztag.Net.Models
         /// </summary>
         [JsonProperty(PropertyName = "event", Required = Required.Always)]
         public ButtonEventType Event { get; set; }
+
+        /// <summary>
+        /// The timestamp
+        /// </summary>
+        [JsonProperty(PropertyName = "time")]
+        public string Time { get; set; }
     }
 }

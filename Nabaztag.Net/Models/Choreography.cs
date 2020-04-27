@@ -88,7 +88,7 @@ namespace Nabaztag.Net.Models
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
         public void SetAttente(byte waitDurationTimeframeMultiple = 0)
         {
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.Attentte,
             });
         }
@@ -100,7 +100,7 @@ namespace Nabaztag.Net.Models
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
         public void SetFrameDuration(byte durationMilliseconds, byte waitDurationTimeframeMultiple = 0)
         {
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.FrameDuration, durationMilliseconds,
             });
             FrameDurationMilliseconds = durationMilliseconds;
@@ -117,8 +117,8 @@ namespace Nabaztag.Net.Models
             if (palette > 7)
                 throw new ArgumentException($"{palette} has to be between 0 and 7");
 
-            _choreography.Concat(new byte[] {
-                waitDurationTimeframeMultiple,  (byte)OpCode.SetLedColor, (byte)led, palette,
+            _choreography.AddRange(new byte[] {
+                waitDurationTimeframeMultiple,  (byte)OpCode.SetLedPalette, (byte)led, palette,
             });
         }
 
@@ -128,7 +128,7 @@ namespace Nabaztag.Net.Models
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
         public void SetRanDomMidi(byte waitDurationTimeframeMultiple = 0)
         {
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.RandomMidi,
             });
         }
@@ -148,7 +148,7 @@ namespace Nabaztag.Net.Models
                 waitDurationTimeframeMultiple, (byte)OpCode.SetMotor, (byte)ear, (byte)(steps > 0 ? 0 : 1), (byte)(steps > 0 ? steps : -steps),
             };
 
-            _choreography.Concat(chrono);
+            _choreography.AddRange(chrono);
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace Nabaztag.Net.Models
                 waitDurationTimeframeMultiple, (byte)OpCode.Avance, (byte)ear, steps,
             };
 
-            _choreography.Concat(chrono);
+            _choreography.AddRange(chrono);
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Nabaztag.Net.Models
                 waitDurationTimeframeMultiple, (byte)OpCode.SetMotorDirection, (byte)(forward ? 0 : 1),
             };
 
-            _choreography.Concat(chrono);
+            _choreography.AddRange(chrono);
         }
 
         /// <summary>
@@ -195,14 +195,14 @@ namespace Nabaztag.Net.Models
             if (repeat <= 0)
                 throw new ArgumentException($"{repeat} has to be positive");
 
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                     waitDurationTimeframeMultiple, (byte)OpCode.SetLedColor, (byte)led, color.R, color.G, color.B, 0, 0,
                     dureationMiliseconds, (byte)OpCode.SetLedColor, (byte)led, 0, 0, 0, 0, 0,
                 });
 
             for (int i = 1; i < repeat; i++)
             {
-                _choreography.Concat(new byte[] {
+                _choreography.AddRange(new byte[] {
                     dureationMiliseconds, (byte)OpCode.SetLedColor, (byte)led, color.R, color.G, color.B, 0, 0,
                     dureationMiliseconds, (byte)OpCode.SetLedColor, (byte)led, 0, 0, 0, 0, 0,
                 });
@@ -221,14 +221,14 @@ namespace Nabaztag.Net.Models
             if (repeat <= 0)
                 throw new ArgumentException($"{repeat} has to be positive");
 
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.SetLedsColor, color.R, color.G, color.B, 0, 0, 0,
                 dureationMiliseconds, (byte)OpCode.SetLedsColor, 0, 0, 0, 0, 0, 0,
             });
 
             for (int i = 1; i < repeat; i++)
             {
-                _choreography.Concat(new byte[] {
+                _choreography.AddRange(new byte[] {
                     dureationMiliseconds, (byte)OpCode.SetLedsColor, color.R, color.G, color.B, 0, 0, 0,
                     dureationMiliseconds, (byte)OpCode.SetLedsColor, 0, 0, 0, 0, 0, 0,
                 });
@@ -243,7 +243,7 @@ namespace Nabaztag.Net.Models
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
         public void SetLed(Led led, Color color, byte waitDurationTimeframeMultiple = 0)
         {
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.SetLedColor, (byte)led, color.R, color.G, color.B, 0, 0,
             });
         }
@@ -256,7 +256,7 @@ namespace Nabaztag.Net.Models
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
         public void SetLedOff(Led led, byte waitDurationTimeframeMultiple = 0)
         {
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.SetLedOff, (byte)led,
             });
         }
@@ -277,7 +277,7 @@ namespace Nabaztag.Net.Models
         /// <param name="waitDurationTimeframeMultiple">duration to wait before executing the command</param>
         public void SetAllLeds(Color color, byte waitDurationTimeframeMultiple = 0)
         {
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.SetLedsColor, color.R, color.G, color.B,
             });
         }
@@ -292,7 +292,7 @@ namespace Nabaztag.Net.Models
         public void SetIfne(byte ifneNumber, int sizeOfBlock, byte waitDurationTimeframeMultiple = 0)
         {
             // Should use for the conversion BinaryPrimitives but coding offline            
-            _choreography.Concat(new byte[] {
+            _choreography.AddRange(new byte[] {
                 waitDurationTimeframeMultiple,  (byte)OpCode.Ifne, ifneNumber, (byte)(sizeOfBlock >> 8), (byte)(sizeOfBlock & 0xFF),
             });
         }

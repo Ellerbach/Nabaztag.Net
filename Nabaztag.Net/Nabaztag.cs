@@ -199,7 +199,7 @@ namespace Nabaztag.Net
             DateTime exp = DateTime.Now.AddSeconds(cancelAfterSeconds);
             bool isExpired = false;
             while ((_LastRequestId[reqId.ToString()] == null)
-                || (isExpired))
+                && (!isExpired))
             {
                 isExpired = (exp < DateTime.Now) && (cancelAfterSeconds > 0);
             }

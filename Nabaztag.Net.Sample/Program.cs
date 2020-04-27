@@ -67,7 +67,7 @@ namespace Nabaztag.Net.Sample
             //// Playing a Choreography and streaming music
             //Sequence seq = new Sequence();
             ////seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
-            ////seq.ChoreographyList = CreateChoreography().SerializeChoreography();
+            //seq.ChoreographyList = CreateChoreography().SerializeChoreography();
             //seq.AudioList = new string[] { "nabsurprised/respirations/Respiration01.mp3" };
             //// set this one with a timeout
             //resp = nabaztag.Command(seq, true, 30);
@@ -81,7 +81,7 @@ namespace Nabaztag.Net.Sample
 
             Console.WriteLine("Playing meteo: Today strom, 25 degrees");
             var signature = new Sequence() { AudioList = new string[] { "nabweatherd/signature.mp3" } };
-            var body = new Sequence[] { new Sequence() { AudioList = new string[] { "nabweatherd/today.mp3", "nabweatherd/sky/stormy.mp3", "nabweatherd/temp/25.mp3", "nabweatherd/degree.mp3" } } };
+            var body = new Sequence[] { new Sequence() { AudioList = new string[] { "nabweatherd/today.mp3", "nabweatherd/sky/stormy.mp3", "nabweatherd/temp/25.mp3", "nabweatherd/degree.mp3" }, ChoreographyList = CreateChoreography().SerializeChoreography() } };
             resp = nabaztag.Message(signature, body, DateTime.MinValue);            
             if (resp.Status == Status.Ok)
                 Console.WriteLine("List played properly");
@@ -96,7 +96,7 @@ namespace Nabaztag.Net.Sample
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
             //Reset all events
-            Console.WriteLine("Rest all events");
+            Console.WriteLine("Reset all events");
             resp = nabaztag.EventMode(ModeType.Idle, new EventType[] { });
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is in idle mode");

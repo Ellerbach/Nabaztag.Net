@@ -28,7 +28,7 @@ namespace Nabaztag.Net.Models
         /// Ear moved
         /// </summary>
         [JsonProperty(PropertyName = "ear")]
-        public int? Ear { get; set; }
+        public Ear? Ear { get; set; }
 
         /// <summary>
         /// The timestamp

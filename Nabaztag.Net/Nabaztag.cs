@@ -85,7 +85,7 @@ namespace Nabaztag.Net
         /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
         /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
         /// <returns>Response object</returns>
-        public Response Command(Sequence sequence, bool needRequestId = true, int cancelAfterSeconds = -1)
+        public Response Command(Sequence[] sequence, bool needRequestId = true, int cancelAfterSeconds = -1)
         {
             var command = new Command();
             Guid reqId;
@@ -104,6 +104,7 @@ namespace Nabaztag.Net
         /// </summary>
         /// <param name="signature">the signature sequence, audio will be played first</param>
         /// <param name="body">the body sequence</param>
+        /// <param name="expiracy">Expriracy time, DateTime.MinValue for no expriracy</param>
         /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
         /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
         /// <returns>Response object</returns>
@@ -126,6 +127,26 @@ namespace Nabaztag.Net
             command.Signature = signature;
             command.Body = body;
             return SendMessageProcessResponse(JsonConvert.SerializeObject(command), reqId, cancelAfterSeconds);
+        }
+
+        /// <summary>
+        /// Send a message command
+        /// </summary>
+        /// <param name="message">The message class to send</param>
+        /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
+        /// <returns></returns>
+        public Response Message(Message message, bool needRequestId = true, int cancelAfterSeconds = -1)
+        {
+            Guid reqId;
+            if (needRequestId)
+            {
+                reqId = Guid.NewGuid();
+                _LastRequestId.Add(reqId.ToString(), null);
+                message.RequestId = reqId.ToString();
+            }
+
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(message), reqId, cancelAfterSeconds);
         }
 
         /// <summary>
@@ -166,6 +187,13 @@ namespace Nabaztag.Net
             return SendMessageProcessResponse(JsonConvert.SerializeObject(cancel), new Guid(), -1);
         }
 
+        /// <summary>
+        /// Send a Test command, this moved the ears and rotate colors
+        /// </summary>
+        /// <param name="testType">Ears or Leds</param>
+        /// <param name="needRequestId">true if you want a confirmation, by default, yes</param>
+        /// <param name="cancelAfterSeconds">Cancel waiting for the answer after the seconds defined. By default, it will wait indefinitely</param>
+        /// <returns>Response object</returns>
         public Response Test(TestType testType, bool needRequestId = true, int cancelAfterSeconds = -1)
         {
             TestMode test = new TestMode() { Test = testType };
@@ -178,6 +206,26 @@ namespace Nabaztag.Net
             }
 
             return SendMessageProcessResponse(JsonConvert.SerializeObject(test), reqId, cancelAfterSeconds);
+        }
+
+        /// <summary>
+        /// Send an info command
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="needRequestId"></param>
+        /// <param name="cancelAfterSeconds"></param>
+        /// <returns></returns>
+        public Response Info(Info info, bool needRequestId = true, int cancelAfterSeconds = -1)
+        {
+            Guid reqId;
+            if (needRequestId)
+            {
+                reqId = Guid.NewGuid();
+                _LastRequestId.Add(reqId.ToString(), null);
+                info.RequestId = reqId.ToString();
+            }
+
+            return SendMessageProcessResponse(JsonConvert.SerializeObject(info), reqId, cancelAfterSeconds);
         }
 
         private bool SendMessage(string message)
@@ -240,6 +288,7 @@ namespace Nabaztag.Net
                                         StateEvent?.Invoke(this, State);
                                         break;
                                     case PaquetType.EarsEvent:
+                                    case PaquetType.EarEvent:
                                         var earsEvent = JsonConvert.DeserializeObject<EarsEvent>(result);
                                         EarsEvent?.Invoke(this, earsEvent);
                                         break;

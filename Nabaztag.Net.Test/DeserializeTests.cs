@@ -34,8 +34,8 @@ namespace Nabaztag.Net.Test
         [Fact]
         public void DeserializeEarEventEar()
         {
-            const int ear = -1;
-            var input = $"{{\"type\":\"ears_event\",\"ear\":{ear}}}";
+            var ear = Ear.Left;
+            var input = $"{{\"type\":\"ears_event\",\"ear\":\"{ear.ToString().ToLower()}\"}}";
             var ears = JsonConvert.DeserializeObject<EarsEvent>(input);
             Assert.Null(ears.Left);
             Assert.Null(ears.Right);

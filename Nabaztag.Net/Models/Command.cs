@@ -31,7 +31,7 @@ namespace Nabaztag.Net.Models
         /// A sequence
         /// </summary>
         [JsonProperty(PropertyName = "sequence", Required = Required.Always)]
-        public Sequence Sequence { get; set; }
+        public Sequence[] Sequence { get; set; }
 
         /// <summary>
         /// Expiration date, optional

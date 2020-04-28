@@ -21,6 +21,6 @@ namespace Nabaztag.Net.Models
         /// Color object representing a color of the one of the les
         /// </summary>
         [JsonProperty(PropertyName = "colors")]
-        public Colors Colors { get; set; }
+        public Colors[] Colors { get; set; }
     }
 }

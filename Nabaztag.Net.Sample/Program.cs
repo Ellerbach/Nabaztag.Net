@@ -4,26 +4,41 @@
 
 using Nabaztag.Net.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Nabaztag.Net.Sample
 {
     class Program
     {
+        static Nabaztag _nabaztag = new Nabaztag("192.168.1.145", 10543);
+        const int TimeToWaitBetweenOperationsMilliseconds = 10_000;
+
         static void Main(string[] args)
         {
-            const int TimeToWaitBetweenOperationsMilliseconds = 10_000;
-
             Console.WriteLine("Hello Nabaztag!");
-            Nabaztag nabaztag = new Nabaztag("192.168.1.145", 10543);
-            nabaztag.StateEvent += Nabaztag_StateEvent;
-            nabaztag.ButtonEvent += Nabaztag_ButtonEvent;
-            nabaztag.EarsEvent += Nabaztag_EarsEvent;
-            nabaztag.AsrEvent += Nabaztag_AsrEvent;
 
+            _nabaztag.StateEvent += Nabaztag_StateEvent;
+            _nabaztag.ButtonEvent += Nabaztag_ButtonEvent;
+            _nabaztag.EarsEvent += Nabaztag_EarsEvent;
+            _nabaztag.AsrEvent += Nabaztag_AsrEvent;
+
+            SleepAwake();
+            Tests();
+            SetInteractive();
+            ResetAllEvents();
+            SubscribeToEvents();
+            SendInfo();
+            PlayChoreographyCommand();
+            PlayAudioChoreoMessage();
+            ResetAllEvents();
+        }
+
+        private static void SleepAwake()
+        {
             // Asking Nabaztag to sleep
             Console.WriteLine("Nabaztag, please sleep :-)");
-            var resp = nabaztag.Sleep();
+            var resp = _nabaztag.Sleep();
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is sleeping");
             else
@@ -33,76 +48,121 @@ namespace Nabaztag.Net.Sample
             Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
 
             Console.WriteLine("Nabaztag, please wake up!");
-            resp = nabaztag.Wakeup();
+            resp = _nabaztag.Wakeup();
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is awake");
             else
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+        }
 
+        private static void Tests()
+        {
             // Test ears and leds
             Console.WriteLine("Test ears");
-            nabaztag.Test(TestType.Ears);
+            _nabaztag.Test(TestType.Ears);
             Console.WriteLine("Test leds");
-            nabaztag.Test(TestType.Leds);
+            _nabaztag.Test(TestType.Leds);
+        }
 
+        private static void SetInteractive()
+        {
             // Set interactive mode and all the events
             Console.WriteLine("Setting interactive mode and all events, press a key to change mode");
-            resp = nabaztag.EventMode(ModeType.Interactive, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr });
+            var resp = _nabaztag.EventMode(ModeType.Interactive, new EventType[] { EventType.Button, EventType.Ears });
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is in interactive mode and will receive all events");
             else
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
             Console.ReadKey();
+            //ResetAllEvents();
+        }
 
+        private static void ResetAllEvents()
+        {
+            //Reset all events
+            Console.WriteLine("Reset all events");
+            var resp = _nabaztag.EventMode(ModeType.Idle, new EventType[] { });
+            if (resp.Status == Status.Ok)
+                Console.WriteLine("Your Nabaztag is in idle mode");
+            else
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+        }
+
+        private static void SubscribeToEvents()
+        {
             //Console.WriteLine("Setting up Idle mode and all events, press a key to change mode");
-            resp = nabaztag.EventMode(ModeType.Idle, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr });
+            var resp = _nabaztag.EventMode(ModeType.Idle, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr });
             if (resp.Status == Status.Ok)
-                Console.WriteLine("Your Nabaztag is in interactive mode and will receive all events");
+                Console.WriteLine("Your Nabaztag is in Idle mode and will receive all events");
             else
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
             Console.ReadKey();
+            //ResetAllEvents();
+        }
 
-            //// Playing a Choreography and streaming music
-            //Sequence seq = new Sequence();
-            ////seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
-            //seq.ChoreographyList = CreateChoreography().SerializeChoreography();
-            //seq.AudioList = new string[] { "nabsurprised/respirations/Respiration01.mp3" };
-            //// set this one with a timeout
-            //resp = nabaztag.Command(seq, true, 30);
-            //if (resp.Status == Status.Ok)
-            //    Console.WriteLine("Your Nabaztag is doing a respiration and a small choreography");
-            //else
-            //    Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+        private static void PlayChoreographyCommand()
+        {
+            // Playing a Choreography and streaming music
+            Sequence[] seq = new Sequence[] { new Sequence(), new Sequence() };
+            //seq.ChoreographyList = new string[] { CreateChoreography().SerializeChoreography() };
+            seq[0].ChoreographyList = CreateChoreography().SerializeChoreography();
+            seq[1].AudioList = new string[] { "nabsurprised/respirations/Respiration01.mp3" };
+            // set this one with a timeout
+            var resp = _nabaztag.Command(seq, true, 30);
+            if (resp.Status == Status.Ok)
+                Console.WriteLine("Your Nabaztag is doing a respiration and a small choreography");
+            else
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
-            //Console.WriteLine($"Waiting {TimeToWaitBetweenOperationsMilliseconds } milliseconds");
-            //Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
+            Console.WriteLine($"Waiting {TimeToWaitBetweenOperationsMilliseconds } milliseconds");
+            Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
+        }
 
+        private static void PlayAudioChoreoMessage()
+        {
             Console.WriteLine("Playing meteo: Today strom, 25 degrees");
             var signature = new Sequence() { AudioList = new string[] { "nabweatherd/signature.mp3" } };
             var body = new Sequence[] { new Sequence() { AudioList = new string[] { "nabweatherd/today.mp3", "nabweatherd/sky/stormy.mp3", "nabweatherd/temp/25.mp3", "nabweatherd/degree.mp3" }, ChoreographyList = CreateChoreography().SerializeChoreography() } };
-            resp = nabaztag.Message(signature, body, DateTime.MinValue);            
+            var resp = _nabaztag.Message(signature, body, DateTime.MinValue);
             if (resp.Status == Status.Ok)
                 Console.WriteLine("List played properly");
             else
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
 
             Console.WriteLine("Trying to the same meteo but with an exprired resquest. Nothing should be played");
-            resp = nabaztag.Message(signature, body, DateTime.Now.AddDays(-1));
+            resp = _nabaztag.Message(signature, body, DateTime.Now.AddDays(-1));
             if (resp.Status == Status.Expired)
                 Console.WriteLine("As planned, this request has expired");
             else
                 Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+        }
 
-            //Reset all events
-            Console.WriteLine("Reset all events");
-            resp = nabaztag.EventMode(ModeType.Idle, new EventType[] { });
-            if (resp.Status == Status.Ok)
-                Console.WriteLine("Your Nabaztag is in idle mode");
-            else
-                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+        static private void SendInfo()
+        {
+            Console.WriteLine(" This will send information to play when idel on the nabaztag as an info object");
+            // {"type":"info","info_id":"nabairqualityd","animation":{"tempo":14,"colors":[{"left":"000000","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"000000"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"000000","right":"00ffff"},{"left":"000000","center":"000000","right":"00ffff"},{"left":"000000","center":"000000","right":"000000"},{"left":"000000","center":"00ffff","right":"000000"},{"left":"000000","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"00ffff"},{"left":"00ffff","center":"00ffff","right":"000000"},{"left":"00ffff","center":"000000","right":"00ffff"},{"left":"000000","center":"00ffff","right":"00ffff"}]}}
+            Info info = new Info() { InfoId = ".netapplication", Animation = new Animation() };
+            info.Animation.Tempo = 26;
+            List<Colors> colors = new List<Colors>();
+            for (int i = 0; i < 30; i++)
+            {
+                var color = new Colors();
+                color.Left = i % 2 == 0 ? "00000" : "ffffff";
+                color.Right = i % 2 == 0 ? "ffffff" : "000000";
+                color.Center = i % 3 == 0 ? i % 2 == 0 ? "00000" : "ffffff" : "aaaaaa";
+                color.Nose = i % 3 == 0 ? i % 2 == 0 ? "aaaaaa" : "00000" : "ffffff";
+                color.Bottom = i % 3 == 0 ? i % 2 == 0 ? "ffffff" : "aaaaaa" : "00000";
+                colors.Add(color);
+            }
 
+            info.Animation.Colors = colors.ToArray();
+
+            _nabaztag.Info(info, true, 30);
+
+            Console.WriteLine($"Waiting {TimeToWaitBetweenOperationsMilliseconds } milliseconds");
+            Thread.Sleep(TimeToWaitBetweenOperationsMilliseconds);
         }
 
         private static void Nabaztag_AsrEvent(object sender, AsrEvent state)

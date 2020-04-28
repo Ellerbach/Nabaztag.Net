@@ -68,6 +68,12 @@ namespace Nabaztag.Net.Models
         /// <summary>
         /// Ears event
         /// </summary>
+        [EnumMember(Value = "ear_event")]
+        [JsonProperty(PropertyName = "ear_event")]
+        EarEvent,        
+        /// <summary>
+        /// Ears event
+        /// </summary>
         [EnumMember(Value = "ears_event")]
         [JsonProperty(PropertyName = "ears_event")]
         EarsEvent,

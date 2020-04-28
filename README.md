@@ -184,6 +184,24 @@ Byt default, if you'll just calling any of those functions, it will wait for the
 var resp = _nabaztag.EventMode(ModeType.Idle, new EventType[] { });
 ```
 
+## Audio files and path
+
+By default, any file you'll give will be searched in any of the "sound" directory in the pynab main directory. The way the python code is looking at the file is using the core sound directory and look in it. So you can easilly hack it and place the sound you want to play in any directory on the SD Card. You'll just have to pass the directory in a relative path. For example "../../../../nabaztag/test.mp3" will play the file test.mp3 with is located in ~/nabaztag directory so the same home directory as the ~/pynab directory. So you can generate your own files for let's say Text to Speech for example, store them locally and ask using the regular interaction to play it.
+
+Example, this will play a signature and a test message (my lovely French speaking accent):
+
+```chsarp
+var signature = new Sequence() { AudioList = new string[] { "../../../../nabaztag/sploc.mp3" } };
+var body = new Sequence[] { new Sequence() { AudioList = new string[] { "../../../../nabaztag/test.mp3" } } };
+var resp = _nabaztag.Message(signature, body, DateTime.MinValue);
+if (resp.Status == Status.Ok)
+    Console.WriteLine("List played properly");
+else
+    Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
+```
+
+Note that the mp3 files has to be in the Raspberry Pi to work. The code can execute remotely but you must have the mp3 files locally.
+
 ## Choreography elements
 
 Choreography are using elements de determine how you want to light the led, how long, moving the ears, paying random midi. In this version, you can read or generate your own Choreography files as well as generating some on the fligh.

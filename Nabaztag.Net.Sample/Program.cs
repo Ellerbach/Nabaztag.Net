@@ -34,6 +34,7 @@ namespace Nabaztag.Net.Sample
 
             SleepAwake();
             Tests();
+            PlayMyOwnFiles();
             SetInteractive();
             ResetAllEvents();
             SubscribeToEvents();
@@ -41,6 +42,18 @@ namespace Nabaztag.Net.Sample
             PlayChoreographyCommand();
             PlayAudioChoreoMessage();
             ResetAllEvents();
+        }
+
+        private static void PlayMyOwnFiles()
+        {
+            Console.WriteLine($"This will play a sploc and then a nice test voice. Warning: this is only working on a Raspberry Pi only");
+            var signature = new Sequence() { AudioList = new string[] { "../../../../nabaztag/sploc.mp3" } };
+            var body = new Sequence[] { new Sequence() { AudioList = new string[] { "../../../../nabaztag/test.mp3" } } };
+            var resp = _nabaztag.Message(signature, body, DateTime.MinValue);
+            if (resp.Status == Status.Ok)
+                Console.WriteLine("List played properly");
+            else
+                Console.WriteLine($"Something wrong happened: {resp.ErrorClass}, {resp.ErrorMessage}");
         }
 
         private static void SleepAwake()

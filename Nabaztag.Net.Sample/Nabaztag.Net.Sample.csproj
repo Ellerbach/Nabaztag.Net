@@ -15,4 +15,13 @@
     <ProjectReference Include="..\Nabaztag.Net\Nabaztag.Net.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="sploc.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="test.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

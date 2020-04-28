@@ -11,12 +11,21 @@ namespace Nabaztag.Net.Sample
 {
     class Program
     {
-        static Nabaztag _nabaztag = new Nabaztag("192.168.1.145", 10543);
+        static Nabaztag _nabaztag;
         const int TimeToWaitBetweenOperationsMilliseconds = 10_000;
 
         static void Main(string[] args)
         {
             Console.WriteLine("Hello Nabaztag!");
+
+            if (args.Length > 0)
+            {
+                _nabaztag = new Nabaztag(args[0], 10543);
+            }
+            else
+            {
+                _nabaztag = new Nabaztag("192.168.1.145", 10543);
+            }
 
             _nabaztag.StateEvent += Nabaztag_StateEvent;
             _nabaztag.ButtonEvent += Nabaztag_ButtonEvent;

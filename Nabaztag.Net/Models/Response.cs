@@ -33,8 +33,8 @@ namespace Nabaztag.Net.Models
         /// The status
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        [JsonProperty(PropertyName = "status", Required = Required.Always)]
-        public Status Status { get; set; }
+        [JsonProperty(PropertyName = "status")]
+        public Status? Status { get; set; }
 
         /// <summary>
         /// A class of error in case of error
@@ -47,5 +47,28 @@ namespace Nabaztag.Net.Models
         /// </summary>
         [JsonProperty(PropertyName = "message", NullValueHandling = NullValueHandling.Ignore)]
         public string ErrorMessage { get; set; }
+
+        /// <summary>
+        /// The state
+        /// </summary>
+        [JsonProperty(PropertyName = "state", NullValueHandling = NullValueHandling.Ignore)]
+        public StateType State { get; set; }
+
+        /// <summary>
+        /// Uptime
+        /// </summary>
+        [JsonProperty(PropertyName = "uptime", NullValueHandling = NullValueHandling.Ignore)]
+        public int Uptime { get; set; }
+
+        /// <summary>
+        /// Connections
+        /// </summary>
+        [JsonProperty(PropertyName = "connections", NullValueHandling = NullValueHandling.Ignore)]
+        public int Connections { get; set; }
+        /// <summary>
+        /// Connections
+        /// </summary>
+        [JsonProperty(PropertyName = "hardware", NullValueHandling = NullValueHandling.Ignore)]
+        public Hardware Hardware { get; set; }
     }
 }

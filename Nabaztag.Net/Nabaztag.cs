@@ -29,6 +29,14 @@ namespace Nabaztag.Net
         public delegate void AsrEventHandler(object sender, AsrEvent state);
         public event AsrEventHandler AsrEvent;
 
+        /// <summary>
+        /// SStatistics on uptime, hardware, model
+        /// </summary>
+        public Statistics Statistics { get; internal set; }
+
+        /// <summary>
+        /// The state of the Nabaztag
+        /// </summary>
         public NabState State { get; internal set; }
 
         public Nabaztag() : this("localhost", DefaultTcpPortEmmit)
@@ -36,6 +44,7 @@ namespace Nabaztag.Net
 
         public Nabaztag(string hostName, int tcpPort)
         {
+            Statistics = new Statistics();
             _TcpClient = new TcpClient(hostName, tcpPort);
             Task.Factory.StartNew(() => ProcessIncoming());
         }
@@ -261,6 +270,19 @@ namespace Nabaztag.Net
             return _LastRequestId[reqId.ToString()];
         }
 
+        public Statistics GetStatistics()
+        {
+            Paquet paquet = new Paquet() { Type = PaquetType.Statistics };
+            Guid reqId;
+
+            reqId = Guid.NewGuid();
+            _LastRequestId.Add(reqId.ToString(), null);
+            paquet.RequestId = reqId.ToString();
+
+            var res = SendMessageProcessResponse(JsonConvert.SerializeObject(paquet), reqId, 30);
+            return Statistics;
+        }
+
         private void ProcessIncoming()
         {
             // Listen to tcp
@@ -285,6 +307,7 @@ namespace Nabaztag.Net
                                 {
                                     case PaquetType.State:
                                         State = JsonConvert.DeserializeObject<NabState>(result);
+                                        Statistics.State = State.State;
                                         StateEvent?.Invoke(this, State);
                                         break;
                                     case PaquetType.EarsEvent:
@@ -298,15 +321,28 @@ namespace Nabaztag.Net
                                         break;
                                     case PaquetType.Response:
                                         var response = JsonConvert.DeserializeObject<Response>(result);
+                                        if (response.Status == null)
+                                        {
+                                            // We had a statistics in there
+                                            Statistics.Hardware = response.Hardware;
+                                            Statistics.State = response.State;
+                                            Statistics.Uptime = response.Uptime;
+                                            Statistics.Connections = response.Connections;
+                                        }
+
                                         if (response.RequestId != null)
                                         {
-                                            _LastRequestId[response.RequestId] = response;
-                                        }
+                                            // If the Response.Status is null then it's the answer to the statistics
+                                            _LastRequestId[response.RequestId] = response.Status == null ? new Response() { Status = Status.Ok } : response;
+                                        }                                        
 
                                         break;
                                     case PaquetType.AsrEvent:
                                         var asrEvent = JsonConvert.DeserializeObject<AsrEvent>(result);
                                         AsrEvent?.Invoke(this, asrEvent);
+                                        break;
+                                    case PaquetType.Statistics:
+                                        Statistics = JsonConvert.DeserializeObject<Statistics>(result);
                                         break;
                                     default:
                                         break;

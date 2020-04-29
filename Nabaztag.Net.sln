@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nabaztag.Net.Sample", "Naba
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nabaztag.Net", "Nabaztag.Net\Nabaztag.Net.csproj", "{A5E1158B-9110-4FB0-809B-71C29E792DE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nabaztag.Net.Test", "Nabaztag.Net.Test\Nabaztag.Net.Test.csproj", "{F752AE15-CA91-4B9F-9001-B737079028BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nabaztag.Net.Test", "Nabaztag.Net.Test\Nabaztag.Net.Test.csproj", "{F752AE15-CA91-4B9F-9001-B737079028BB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nabaztag.Simulator", "Nabaztag.Simulator\Nabaztag.Simulator.csproj", "{FA2BB76B-CD4F-4B91-99C3-BCBE671DDE7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nabaztag.Simulator", "Nabaztag.Simulator\Nabaztag.Simulator.csproj", "{FA2BB76B-CD4F-4B91-99C3-BCBE671DDE7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nabaztag.Tts", "Nabaztag.Tts\Nabaztag.Tts.csproj", "{6F220049-045A-4F66-9071-605658BC555E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{FA2BB76B-CD4F-4B91-99C3-BCBE671DDE7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA2BB76B-CD4F-4B91-99C3-BCBE671DDE7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA2BB76B-CD4F-4B91-99C3-BCBE671DDE7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F220049-045A-4F66-9071-605658BC555E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F220049-045A-4F66-9071-605658BC555E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F220049-045A-4F66-9071-605658BC555E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F220049-045A-4F66-9071-605658BC555E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

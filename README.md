@@ -295,6 +295,56 @@ To get the byte array and manipulate it yourself:
 var myArray = choreography.ToArray();
 ```
 
+## Simple Text to Speech example using Azure Cognitive Services
+
+You'll find a very simple [Text to Speech example](/Nabaztag.Tts) using Azure Cognitive Services. For low usage, this is free and give a great quality result for almost all languages when using the "neural" languages.
+
+See https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/index-text-to-speech for more information. You'll need an Azure account, you can create one for free.
+
+When selecting your Text to Speech service, sleect F0, this is free, you have limitation but for a normal usage, it should be all enough. Otherwise, price of transactions for a normal usage is few cents of $/€ every month.
+
+The example is a .NET 4.8 application and using mono to run on the Raspberry Pi zero. See the hack about playing [audio files and path](#audio-files-and-path). 
+
+The configuration file looks like this:
+
+```json
+{
+  "Path": "tts",
+  "CognitiveServices": {
+    "Key": "yourkey",
+    "EndPoint": "https://westeurope.api.cognitive.microsoft.com/sts/v1.0/issueToken",
+    "PreferedVoiceShortName": "fr-FR-DeniseNeural"
+  }
+}
+```
+
+The key is the cognitive services key you'll get from the Azure Cognitive Services once you'll create it. The Endpoint is displayed on the page as well. 
+
+The prefered voice is the voice you'll choose. Depending on the region you'll create your service, some voices are not available. There is a function that will allow you to dump in a ```voices.json``` file all the voices. You can then select the one you'd like with the voice you'd like.
+
+Compile it the normal way once in the `NAbaztag.Tts` directory:
+
+```cmd
+dotnet restore
+dotnet build
+```
+
+You'll have to copy into the `~/tts` path or any of the path you'd like in the home directory (specity it the Path confirguration element) all the generated files in `\bin\Debug\net48`(or Release depending how you've build it). Then run:
+
+```bash
+mono Nabaztag.Tts.exe
+```
+
+You'll get as a result:
+```
+pi@nabaztag:~/tts $ mono Nabaztag.Tts.exe
+Hello Text to Speech!
+Type the text for Nabaztag to say: C'est super cool d'avoir un exemple de text to speech qui fonctionne top!
+TTS played properly
+```
+
+And of course the pleasure, in this case with the French voice selected, to have the Nabaztag reading the text. Note that it takes more time for the Nabaztag to move the ear and start speaking than it takes time to go the Azure Services, download the file and send it to play to the Nabaztag :-)
+
 # TODO
 
 - improve documentation

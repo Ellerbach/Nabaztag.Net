@@ -32,16 +32,32 @@ namespace Nabaztag.Net.Sample
             _nabaztag.EarsEvent += Nabaztag_EarsEvent;
             _nabaztag.AsrEvent += Nabaztag_AsrEvent;
 
-            SleepAwake();
-            Tests();
-            PlayMyOwnFiles();
-            SetInteractive();
-            ResetAllEvents();
-            SubscribeToEvents();
-            SendInfo();
-            PlayChoreographyCommand();
-            PlayAudioChoreoMessage();
-            ResetAllEvents();
+            //GetStatistics();            
+            //SleepAwake();
+            //Tests();
+            //PlayMyOwnFiles();
+            //SetInteractive();
+            //ResetAllEvents();
+            //SubscribeToEvents();
+            //SendInfo();
+            //PlayChoreographyCommand();
+            //PlayAudioChoreoMessage();
+            //ResetAllEvents();
+        }
+
+        private static void GetStatistics()
+        {
+            var res = _nabaztag.GetStatistics();
+            Console.WriteLine($"Connections: {res.Connections}");
+            Console.WriteLine($"Hardware: ");
+            Console.WriteLine($"   Model: {res.Hardware?.Model}");
+            Console.WriteLine($"   Sound Card: {res.Hardware?.SoundCard}");
+            Console.WriteLine($"   Sound Input: {res.Hardware?.SoundInput}");
+            Console.WriteLine($"   Is RFID: {res.Hardware?.IsRfid}");
+            Console.WriteLine($"   Left ear: {res.Hardware?.LeftEarStatus}");
+            Console.WriteLine($"   Right ear: {res.Hardware?.RrightEarStatus}");
+            Console.WriteLine($"State: {res.State}");
+            Console.WriteLine($"Uptime: {res.Uptime}");
         }
 
         private static void PlayMyOwnFiles()

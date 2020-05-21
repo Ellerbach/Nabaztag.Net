@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nabaztag.WebTts", "Nabaztag.WebTts\Nabaztag.WebTts.csproj", "{B292F603-DDC2-4144-BD9C-6FEED275E6BC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nabaztag.Net", "Nabaztag.Net\Nabaztag.Net.csproj", "{D0BDDD0F-6CB6-4857-8BE5-288C3401A77E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B292F603-DDC2-4144-BD9C-6FEED275E6BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B292F603-DDC2-4144-BD9C-6FEED275E6BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B292F603-DDC2-4144-BD9C-6FEED275E6BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B292F603-DDC2-4144-BD9C-6FEED275E6BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0BDDD0F-6CB6-4857-8BE5-288C3401A77E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0BDDD0F-6CB6-4857-8BE5-288C3401A77E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0BDDD0F-6CB6-4857-8BE5-288C3401A77E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0BDDD0F-6CB6-4857-8BE5-288C3401A77E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A1A4588C-4C3E-45E4-A3D6-F6C05971CAE5}
+	EndGlobalSection
+EndGlobal

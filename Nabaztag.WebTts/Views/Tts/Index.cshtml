@@ -1,0 +1,22 @@
+﻿@using Nabaztag.WebTts.Resources
+
+@{
+    ViewBag.Title = Tts.TtsWhatToSay;
+}
+
+<h2>@Tts.TtsWhatToSay</h2>
+
+@if(!string.IsNullOrEmpty(ViewBag.LastMessage))
+{
+    <p>@ViewBag.LastMessage</p>
+}
+else if (!string.IsNullOrEmpty(ViewBag.Tts))
+{
+    <p>You asked to say: @ViewBag.Tts</p>
+}
+
+@using (Html.BeginForm("SaySomething", "Tts", FormMethod.Post))
+{
+    @Html.TextBox("ttsText")
+    <input type="submit" value="@Tts.TtsSayIt" class="btn btn-default" />
+}

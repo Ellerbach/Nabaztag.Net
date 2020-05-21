@@ -50,6 +50,12 @@ sudo systemctl start nabd.service
 
 Then simply run the app from Visual Studio or a command prompt. You can ajust the default IP address in the code. In the sample app, it will try to connect to 192.168.1.145.
 
+## Text To Speech (TTS) application
+
+A specific Text to Speech application is available. It can run and be called from any place thru a REST API as well as from a web page. the application can be setup for the Azure Cognitive Services key.
+
+All details [here](./Nabaztag.WebTts/README.md).
+
 ## Sample application
 
 The sample application contains some examples, by running them, you'll get something like:
@@ -322,7 +328,7 @@ The key is the cognitive services key you'll get from the Azure Cognitive Servic
 
 The prefered voice is the voice you'll choose. Depending on the region you'll create your service, some voices are not available. There is a function that will allow you to dump in a ```voices.json``` file all the voices. You can then select the one you'd like with the voice you'd like.
 
-Compile it the normal way once in the `NAbaztag.Tts` directory:
+Compile it the normal way once in the `Nabaztag.Tts` directory:
 
 ```cmd
 dotnet restore

@@ -1,0 +1,15 @@
+[Unit]
+Description=Nabaztag TTS
+After=nabd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/bin/xsp4 --port 8888 --applications /:/home/pi/webtts --root /home/pi/webtts --nonstop
+User=root
+PIDFile=/run/nabaztag-tts.pid
+
+[Install]
+WantedBy=multi-user.target

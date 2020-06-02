@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 
 namespace Nabaztag.Net.Models
@@ -13,6 +14,13 @@ namespace Nabaztag.Net.Models
     /// </summary>
     public class AsrEvent
     {
+        /// <summary>
+        /// Type is a command
+        /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonProperty(PropertyName = "type")]
+        public PaquetType Type { get { return PaquetType.AsrEvent; } }
+
         /// <summary>
         /// What has been understand by the NLU
         /// </summary>

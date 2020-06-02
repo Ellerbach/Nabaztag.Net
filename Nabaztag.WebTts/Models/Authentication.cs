@@ -36,17 +36,18 @@ namespace Nabaztag.WebTts
             accessToken = FetchTokenAsync().Result;
 
             //renew the token every specfied minutes
-            accessTokenRenewer = new Timer(new TimerCallback(OnTokenExpiredCallback),
-                                           this,
-                                           TimeSpan.FromMinutes(RefreshTokenDuration),
-                                           TimeSpan.FromMilliseconds(-1));
+            //accessTokenRenewer = new Timer(new TimerCallback(OnTokenExpiredCallback),
+            //                               this,
+            //                               TimeSpan.FromMinutes(RefreshTokenDuration),
+            //                               TimeSpan.FromMilliseconds(-1));
         }
 
         public string GetAccessToken()
         {
             lock (objLock)
             {
-                return accessToken;
+                //return accessToken;
+                return FetchTokenAsync().Result;
             }
         }
 

@@ -24,7 +24,7 @@ namespace Nabaztag.Net.Sample
             }
             else
             {
-                _nabaztag = new Nabaztag("192.168.1.145", 10543);
+                _nabaztag = new Nabaztag("192.168.1.125", 10543);
             }
 
             _nabaztag.StateEvent += Nabaztag_StateEvent;
@@ -32,14 +32,15 @@ namespace Nabaztag.Net.Sample
             _nabaztag.EarsEvent += Nabaztag_EarsEvent;
             _nabaztag.AsrEvent += Nabaztag_AsrEvent;
 
-            //GetStatistics();            
+            //GetStatistics();
+            //Thread.Sleep(500);
             //SleepAwake();
             //Tests();
             //PlayMyOwnFiles();
             //SetInteractive();
             //ResetAllEvents();
             //SubscribeToEvents();
-            //SendInfo();
+            SendInfo();
             //PlayChoreographyCommand();
             //PlayAudioChoreoMessage();
             //ResetAllEvents();
@@ -187,11 +188,11 @@ namespace Nabaztag.Net.Sample
             for (int i = 0; i < 30; i++)
             {
                 var color = new Colors();
-                color.Left = i % 2 == 0 ? "00000" : "ffffff";
+                color.Left = i % 2 == 0 ? "000000" : "ffffff";
                 color.Right = i % 2 == 0 ? "ffffff" : "000000";
-                color.Center = i % 3 == 0 ? i % 2 == 0 ? "00000" : "ffffff" : "aaaaaa";
-                color.Nose = i % 3 == 0 ? i % 2 == 0 ? "aaaaaa" : "00000" : "ffffff";
-                color.Bottom = i % 3 == 0 ? i % 2 == 0 ? "ffffff" : "aaaaaa" : "00000";
+                color.Center = i % 3 == 0 ? i % 2 == 0 ? "000000" : "ffffff" : "aaaaaa";
+                color.Nose = i % 3 == 0 ? i % 2 == 0 ? "aaaaaa" : "000000" : "ffffff";
+                color.Bottom = i % 3 == 0 ? i % 2 == 0 ? "ffffff" : "aaaaaa" : "000000";
                 colors.Add(color);
             }
 

@@ -39,12 +39,13 @@ namespace Nabaztag.WebTts.Controllers
                 string host = $"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1";
                 SaveTextToSpeechFile(host, auth, ttsText, ttsSetting.PrefferedVoice, ttsFilePath).Wait();
 
-                var nabaztag = new Nabaztag.Net.Nabaztag(ttsSetting.NabaztagAddress, ttsSetting.NabaztagPort);
+                return NabaztagConnection.Speak($"../../../../{ttsSetting.ApplicationPath}/{TtsFileName}");
+                //var nabaztag = new Nabaztag.Net.Nabaztag(ttsSetting.NabaztagAddress, ttsSetting.NabaztagPort);
 
-                var signature = new Sequence() { AudioList = new string[] { "nabweatherd/signature.mp3" } };
-                var body = new Sequence[] { new Sequence() { AudioList = new string[] { $"../../../../{ttsSetting.ApplicationPath}/{TtsFileName}" } } };
-                var resp = nabaztag.Message(signature, body, DateTime.MinValue);
-                return (resp.Status == Status.Ok, "");
+                //var signature = new Sequence() { AudioList = new string[] { "nabweatherd/signature.mp3" } };
+                //var body = new Sequence[] { new Sequence() { AudioList = new string[] { $"../../../../{ttsSetting.ApplicationPath}/{TtsFileName}" } } };
+                //var resp = nabaztag.Message(signature, body, DateTime.MinValue);
+                //return (resp.Status == Status.Ok, "");
             }
             catch (Exception ex)
             {

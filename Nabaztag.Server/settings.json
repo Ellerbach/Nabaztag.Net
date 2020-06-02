@@ -1,0 +1,19 @@
+{
+  "CognitiveKey": "YOUR AZURE COGNITIVE SERVICES KEY",
+  "CognitiveRegion": "westeurope",
+  "LuisRegion": "westus",
+  "LuisStage": "staging",
+  "LuisAddId": "3e48f937-d0c5-4f04-ae3e-8cdc84e68bfb",
+  "LuisKey": "YOUR LUIS KEY HERE",
+  "Locale": "fr-FR",
+  "TtsUrl": "http://localhost:8088/api/Speak",
+  "ClockPhrase": "Il est très exactement {0} heures {1} minutes et {2} secondes",
+  "PrefferedVoice": {
+    "Name": "Microsoft Server Speech Text to Speech Voice (fr-FR, DeniseNeural)",
+    "ShortName": "fr-FR-DeniseNeural",
+    "Gender": "Female",
+    "Locale": "fr-FR",
+    "SampleRateHertz": "24000",
+    "VoiceType": "Neural"
+  }
+}

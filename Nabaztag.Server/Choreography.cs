@@ -283,8 +283,8 @@ namespace Nabaztag.Server
         {
 
             IsChoreographyPlaying = true;
-            new Thread(() =>
-            {
+            //new Thread(() =>
+            //{
                 using (FileStream fs = File.OpenRead(filePath))
                 {
                     if (fs.Length < 4)
@@ -297,7 +297,7 @@ namespace Nabaztag.Server
                     ReadChoreography(fs);
                     IsChoreographyPlaying = false;
                 }
-            }).Start();
+            //}).Start();
 
         }
     }

@@ -48,13 +48,22 @@ namespace Nabaztag.Server
                     _recording = true;
                     new Thread(() =>
                     {
-                        while (_recording)
+                        try
                         {
-                            Thread.Sleep(1);
-                        }
+                            while (_recording)
+                            {
+                                Thread.Sleep(1);
+                            }
 
-                        device.StopRecording();
-                        IsRecording = false;
+                            device.StopRecording();
+                            IsRecording = false;
+
+                        }
+                        catch
+                        {
+                            _recording = false;
+                            IsRecording = false;
+                        }
                     }).Start();
                 }
             }

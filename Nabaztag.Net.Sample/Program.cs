@@ -39,8 +39,8 @@ namespace Nabaztag.Net.Sample
             //PlayMyOwnFiles();
             //SetInteractive();
             //ResetAllEvents();
-            //SubscribeToEvents();
-            SendInfo();
+            SubscribeToEvents();
+            //SendInfo();
             //PlayChoreographyCommand();
             //PlayAudioChoreoMessage();
             //ResetAllEvents();

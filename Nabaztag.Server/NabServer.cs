@@ -11,11 +11,13 @@ using System.Media;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using System.Web.SessionState;
 using System.Xml.Linq;
 
 namespace Nabaztag.Server
@@ -28,7 +30,7 @@ namespace Nabaztag.Server
         private const string ChoreographyDirectory = "choreographies";
 
         public static Leds Leds;
-        public static Button Button;
+        //public static Button Button;
         public static Sound Sound;
         public static Ears Ears;
 
@@ -44,16 +46,22 @@ namespace Nabaztag.Server
         private static bool _applicationRunning = true;
         private static string _locale;
         private static Settings _settings;
+        private static List<Thread> _listnerThread;
 
         private static List<Socket> _sockets;
+        private static List<Process> _queueProcess;
+        private static object _queueLock;
 
         private static Thread _animationIdle;
 
         static void Main(string[] args)
         {
+            _listnerThread = new List<Thread>();
             _path = Directory.GetCurrentDirectory();
             _eventId = new Dictionary<Socket, EventNotification>();
             _sockets = new List<Socket>();
+            _queueProcess = new List<Process>();
+            _queueLock = new object();
 
             try
             {
@@ -64,7 +72,7 @@ namespace Nabaztag.Server
             { }
 
             Leds = new Leds();
-            Button = new Button(PinButton);
+            var Button = new Button(PinButton);
             Button.ButtonEvent += Button_ButtonEvent;
 
             Sound = new Sound();
@@ -82,26 +90,76 @@ namespace Nabaztag.Server
             Console.WriteLine("Press long to record and it will play after");
             Console.WriteLine("Double click to play a choreography");
 
-            new Thread(() =>
-            {
-                while (_applicationRunning)
-                {
-                    Thread.Sleep(10);
-                    ListenToSockets();
-                }
-            }).Start();
+            //var listn = new Thread(() =>
+            //{
+            //    while (_applicationRunning)
+            //    {
+            //        Thread.Sleep(10);
+            //        ListenToSockets();
+            //    }
+            //});
+            //listn.Priority = ThreadPriority.Lowest;
+            //listn.Start();
 
             while (!Console.KeyAvailable)
             {
-                Thread.Sleep(1000);                
-                if(Button.PinValue == PinValue.Low)
+                Thread.Sleep(100);
+                lock(_queueLock)
                 {
-                    Console.WriteLine($"low");
+                    foreach(var proc in _queueProcess)
+                    {
+                        switch (proc.PaquetType)
+                        {
+
+                            case PaquetType.Information:
+                                ProcessInformation((Info)proc.ToProcess);
+                                break;
+                            case PaquetType.Ears:
+                                ProcessMoveEar((Net.Models.Ears)proc.ToProcess);
+                                break;
+                            case PaquetType.Command:
+                                ProcessCommand((Command)proc.ToProcess);
+                                break;
+                            case PaquetType.Message:
+                                ProcessMessage((Message)proc.ToProcess);
+                                break;
+                            case PaquetType.Wakeup:
+                                ProcessWakeUp();
+                                break;
+                            case PaquetType.Sleep:
+                                ProcessGoToSleep();
+                                break;
+                            case PaquetType.Test:
+                                ProcessTest((TestMode)proc.ToProcess);
+                                break;
+                            case PaquetType.Cancel:
+                            case PaquetType.Mode:
+                            case PaquetType.EarEvent:
+                            case PaquetType.EarsEvent:
+                            case PaquetType.ButtonEvent:
+                            case PaquetType.Response:
+                            case PaquetType.AsrEvent:
+                            case PaquetType.Statistics:
+                            case PaquetType.State:
+                            default:
+                                break;
+                        }
+                        _queueProcess.Remove(proc);
+                    }
+                }
+            }
+
+            _applicationRunning = false;
+            //listn.Abort();
+            foreach (var th in _listnerThread)
+            {
+                if (th.IsAlive)
+                {
+                    th.Abort();
                 }
             }
 
             GoToSleep();
-            _applicationRunning = false;
         }
 
         private static void Button_ButtonEvent(object sender, ButtonEventArguments buttonEventArgs)
@@ -141,10 +199,10 @@ namespace Nabaztag.Server
 
                     _state.State = StateType.Playing;
                     Sound.Play($"{_path}/sounds/acquired.mp3");
-                    while (Sound.IsPlaying)
-                    {
-                        Thread.Sleep(1);
-                    }
+                    //while (Sound.IsPlaying)
+                    //{
+                    //    Thread.Sleep(1);
+                    //}
 
                     //Sound.Play($"{_path}/record.wav");
                     _state.State = StateType.Idle;
@@ -163,7 +221,7 @@ namespace Nabaztag.Server
                                 {
                                     if (evts.Key.Connected)
                                     {
-                                        Console.WriteLine($"Sending event asr to: {evts.Key.LocalEndPoint}");
+                                        Console.WriteLine($"Sending event asr to: {evts.Key.RemoteEndPoint}");
                                         AsrEvent asrEvent = new AsrEvent() { Time = DateTime.Now.ToString("yyyy-MM-dd\"T\"HH:mm:ss.ffffffzzz") };
                                         Nlu nlu = new Nlu() { Intent = asr.ToLower() };
                                         asrEvent.Nlu = nlu;
@@ -186,6 +244,10 @@ namespace Nabaztag.Server
                                 Authentication auth = new Authentication(endpoint, _settings.CognitiveKey);
                                 var ttsFilePath = $"{_path}/{SoundDirectory}/toplay.mp3";
                                 SaveTextToSpeechFile(host, auth, toSay, _settings.PrefferedVoice, ttsFilePath).Wait();
+                                while (Sound.IsPlaying)
+                                {
+                                    Thread.Sleep(1);
+                                }
                                 Sound.Play(ttsFilePath);
                             }
                         }
@@ -199,14 +261,19 @@ namespace Nabaztag.Server
             }
         }
 
+        #region Process sockets and events
+
         private static void ListenToSockets()
         {
             if (_tcpListener.Pending())
             {
-                new Thread(() =>
+                var th = new Thread(() =>
                 {
                     var listner = _tcpListener.AcceptSocket();
-                    _sockets.Add(listner);
+                    if (!_sockets.Contains(listner))
+                    {
+                        _sockets.Add(listner);
+                    }
                     try
                     {
                         listner.ReceiveBufferSize = _buffer.Length;
@@ -256,30 +323,13 @@ namespace Nabaztag.Server
                                                 response.Status = Status.Error;
                                                 response.ErrorMessage = $"{nameof(Info.Animation)} can't be empty or null";
                                                 response.ErrorClass = "Mega error!";
-                                                SendMessage(response, listner);
-                                                break;
                                             }
 
-                                            WaitForIdle();
-                                            if (_animationIdle != null)
-                                            {
-                                                Console.WriteLine($"Keeling previous animation");
-                                                _animationIdle.Abort();
-                                                while (_animationIdle.IsAlive)
-                                                {
-                                                    Thread.Sleep(1);
-                                                }
-                                                Console.WriteLine($"Previous animation killed");
-                                            }
                                             SendMessage(response, listner);
-
-                                            Leds.SetAllLeds(Color.Black);
-                                            _animationIdle = new Thread(() =>
+                                            lock (_queueLock)
                                             {
-                                                PlayAnimation(info.Animation);
-                                            });
-                                            _animationIdle.Priority = ThreadPriority.Lowest;
-                                            _animationIdle.Start();
+                                                _queueProcess.Add(new Process() { PaquetType = PaquetType.Information, ToProcess = info });
+                                            }
                                             break;
                                         case PaquetType.Ears:
                                             var ears = JsonConvert.DeserializeObject<Net.Models.Ears>(ret);
@@ -287,15 +337,13 @@ namespace Nabaztag.Server
                                             if (_state.State == StateType.Asleep)
                                             {
                                                 response.Status = Status.Canceled;
-                                                SendMessage(response, listner);
-                                                break;
                                             }
-                                            SendMessage(response, listner);
 
-                                            WaitForIdle();
-                                            Ears.MoveAbsolute(Ear.Left, EarDirection.Forward, (byte)ears.Left);
-                                            Ears.MoveAbsolute(Ear.Right, EarDirection.Forward, (byte)ears.Right);
-                                            WaitForIdle();
+                                            SendMessage(response, listner);
+                                            lock (_queueLock)
+                                            {
+                                                _queueProcess.Add(new Process() { PaquetType = PaquetType.Ears, ToProcess = ears });
+                                            }
                                             break;
                                         case PaquetType.Command:
                                             var cmd = JsonConvert.DeserializeObject<Command>(ret);
@@ -305,53 +353,18 @@ namespace Nabaztag.Server
                                                 response.Status = Status.Error;
                                                 response.ErrorMessage = $"{nameof(Command.Sequence)} can't be empty or null";
                                                 response.ErrorClass = "Mega error!";
-                                                SendMessage(response, listner);
-                                                break;
-                                            }
 
-                                            if (_state.State == StateType.Asleep)
+                                            }
+                                            else if (_state.State == StateType.Asleep)
                                             {
                                                 response.Status = Status.Canceled;
-                                                SendMessage(response, listner);
-                                                break;
                                             }
 
                                             SendMessage(response, listner);
-                                            // Play the sequence if nothing else is playing, or wait
-                                            // And cancel if expiration date is past
-                                            _state.State = StateType.Playing;
-                                            BoradcastState();
-                                            DateTime dtCancel = cmd.Expiration.GetValueOrDefault();
-                                            while (IsBusy)
+                                            lock (_queueLock)
                                             {
-                                                if (dtCancel > DateTime.Now)
-                                                {
-                                                    response.Status = Status.Expired;
-                                                    break;
-                                                }
+                                                _queueProcess.Add(new Process() { PaquetType = PaquetType.Command, ToProcess = cmd });
                                             }
-
-                                            if (response.Status != Status.Expired)
-                                            {
-                                                foreach (var cor in cmd.Sequence)
-                                                {
-                                                    if (cor.ChoreographyList != null)
-                                                    {
-                                                        Choreography.ReadChoreography(FindChoreography(cor.ChoreographyList));
-                                                    }
-
-                                                    if (cor.AudioList != null)
-                                                    {
-                                                        foreach (var audio in cor.AudioList)
-                                                        {
-                                                            PlayAndWait(FindMusic(audio));
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            _state.State = StateType.Idle;
-                                            BoradcastState();
                                             break;
                                         case PaquetType.Message:
                                             var msg = JsonConvert.DeserializeObject<Message>(ret);
@@ -361,58 +374,17 @@ namespace Nabaztag.Server
                                                 response.Status = Status.Error;
                                                 response.ErrorMessage = $"{nameof(Message.Body)} can't be empty or null";
                                                 response.ErrorClass = "Mega error!";
-                                                SendMessage(response, listner);
-                                                break;
                                             }
-
-                                            if (_state.State == StateType.Asleep)
+                                            else if (_state.State == StateType.Asleep)
                                             {
                                                 response.Status = Status.Canceled;
-                                                SendMessage(response, listner);
-                                                break;
                                             }
 
                                             SendMessage(response, listner);
-                                            // Play the sequence if nothing else is playing, or wait
-                                            // And cancel if expiration date is past
-                                            _state.State = StateType.Playing;
-                                            BoradcastState();
-                                            DateTime dtCancelMsg = msg.Expiration.GetValueOrDefault();
-                                            while (IsBusy)
+                                            lock (_queueLock)
                                             {
-                                                if (dtCancelMsg > DateTime.Now)
-                                                {
-                                                    response.Status = Status.Expired;
-                                                    break;
-                                                }
+                                                _queueProcess.Add(new Process() { PaquetType = PaquetType.Message, ToProcess = msg });
                                             }
-
-                                            if (response.Status != Status.Expired)
-                                            {
-                                                if (msg.Signature != null)
-                                                {
-                                                    foreach (var audio in msg.Signature.AudioList)
-                                                    {
-                                                        PlayAndWait(FindMusic(audio));
-                                                    }
-                                                }
-
-                                                foreach (var body in msg.Body)
-                                                {
-                                                    if (body.ChoreographyList != null)
-                                                    {
-                                                        Choreography.ReadChoreography(FindChoreography(body.ChoreographyList));
-                                                    }
-
-                                                    foreach (var audio in body?.AudioList)
-                                                    {
-                                                        PlayAndWait(FindMusic(audio));
-                                                    }
-                                                }
-                                            }
-
-                                            _state.State = StateType.Idle;
-                                            BoradcastState();
                                             break;
                                         case PaquetType.Cancel:
                                             var cancel = JsonConvert.DeserializeObject<Cancel>(ret);
@@ -426,20 +398,19 @@ namespace Nabaztag.Server
                                             SendMessage(response, listner);
                                             break;
                                         case PaquetType.Wakeup:
-                                            var wakeup = JsonConvert.DeserializeObject<Wakeup>(ret);
-                                            _state.State = StateType.Idle;
-                                            BoradcastState();
-                                            WakeUp();
+                                            var wakeup = JsonConvert.DeserializeObject<Wakeup>(ret);                                            
                                             response.RequestId = wakeup.RequestId;
                                             SendMessage(response, listner);
+                                            ProcessWakeUp();
                                             break;
                                         case PaquetType.Sleep:
                                             var sleep = JsonConvert.DeserializeObject<Sleep>(ret);
-                                            _state.State = StateType.Asleep;
-                                            BoradcastState();
-                                            GoToSleep();
                                             response.RequestId = sleep.RequestId;
                                             SendMessage(response, listner);
+                                            lock (_queueLock)
+                                            {
+                                                _queueProcess.Add(new Process() { PaquetType = PaquetType.Sleep, ToProcess = sleep });
+                                            }
                                             break;
                                         case PaquetType.Mode:
                                             var mode = JsonConvert.DeserializeObject<EventMode>(ret);
@@ -475,22 +446,10 @@ namespace Nabaztag.Server
                                             response.RequestId = test.RequestId;
                                             Console.WriteLine($"{nameof(test)}");
                                             SendMessage(response, listner);
-
-                                            var backupState = _state.State;
-                                            _state.State = StateType.Playing;
-                                            BoradcastState();
-                                            if (test.Test == TestType.Ears)
+                                            lock (_queueLock)
                                             {
-                                                TestEars();
+                                                _queueProcess.Add(new Process() { PaquetType = PaquetType.Test, ToProcess = test });
                                             }
-                                            else
-                                            {
-                                                TestLeds();
-                                            }
-
-                                            _state.State = backupState;
-                                            BoradcastState();
-
                                             break;
                                         case PaquetType.Statistics:
                                             var stats = JsonConvert.DeserializeObject<Statistics>(ret);
@@ -538,28 +497,189 @@ namespace Nabaztag.Server
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Exception: {ex.Message}");
+                        Console.WriteLine($"Exception: {ex}");
                     }
                     _sockets.Remove(listner);
                     _connectedClients--;
-                }).Start();
+                });
+                th.Priority = ThreadPriority.Lowest;
+                _listnerThread.Add(th);
+                th.Start();
             }
         }
+
+        private static void ProcessWakeUp()
+        {
+            WakeUp();
+            _state.State = StateType.Idle;
+            BoradcastState();            
+        }
+
+        private static void ProcessMessage(Message msg)
+        {
+            // Play the sequence if nothing else is playing, or wait
+            // And cancel if expiration date is past
+           
+            DateTime dtCancelMsg = msg.Expiration.GetValueOrDefault();
+            bool expired = false;
+            while (IsBusy)
+            {
+                if (dtCancelMsg > DateTime.Now)
+                {
+                    expired = true;
+                    break;
+                }
+            }
+
+            if (!expired)
+            {
+                _state.State = StateType.Playing;
+                BoradcastState();
+                if (msg.Signature != null)
+                {
+                    foreach (var audio in msg.Signature.AudioList)
+                    {
+                        PlayAndWait(FindMusic(audio));
+                    }
+                }
+
+                foreach (var body in msg.Body)
+                {
+                    if (body.ChoreographyList != null)
+                    {
+                        Choreography.ReadChoreography(FindChoreography(body.ChoreographyList));
+                    }
+
+                    foreach (var audio in body?.AudioList)
+                    {
+                        PlayAndWait(FindMusic(audio));
+                    }
+                }
+                _state.State = StateType.Idle;
+                BoradcastState();
+            }           
+        }
+
+        private static void ProcessGoToSleep()
+        {
+            _state.State = StateType.Asleep;
+            BoradcastState();
+            GoToSleep();
+        }
+
+        private static void ProcessTest(TestMode test)
+        {
+            var backupState = _state.State;
+            _state.State = StateType.Playing;
+            BoradcastState();
+            if (test.Test == TestType.Ears)
+            {
+                TestEars();
+            }
+            else
+            {
+                TestLeds();
+            }
+
+            _state.State = backupState;
+            BoradcastState();
+        }
+
+        private static void ProcessCommand(Command cmd)
+        {
+            // Play the sequence if nothing else is playing, or wait
+            // And cancel if expiration date is past
+
+            DateTime dtCancel = cmd.Expiration.GetValueOrDefault();
+            bool expired = false;
+            while (IsBusy)
+            {
+                if (dtCancel > DateTime.Now)
+                {
+                    expired = true;
+                    break;
+                }
+            }
+
+            if (!expired)
+            {
+                _state.State = StateType.Playing;
+                BoradcastState();
+                foreach (var cor in cmd.Sequence)
+                {
+                    if (cor.ChoreographyList != null)
+                    {
+                        Choreography.ReadChoreography(FindChoreography(cor.ChoreographyList));
+                    }
+
+                    if (cor.AudioList != null)
+                    {
+                        foreach (var audio in cor.AudioList)
+                        {
+                            PlayAndWait(FindMusic(audio));
+                        }
+                    }
+                }
+                _state.State = StateType.Idle;
+                BoradcastState();
+            }
+        }
+
+        private static void ProcessMoveEar(Net.Models.Ears ears)
+        {
+            WaitForIdle();
+            Ears.MoveAbsolute(Ear.Left, EarDirection.Forward, (byte)ears.Left);
+            Ears.MoveAbsolute(Ear.Right, EarDirection.Forward, (byte)ears.Right);
+            WaitForIdle();
+        }
+
+        private static void ProcessInformation(Info info)
+        {
+            WaitForIdle();
+            if (_animationIdle != null)
+            {
+                _animationIdle.Abort();
+                while (_animationIdle.IsAlive)
+                {
+                    Thread.Sleep(1);
+                }
+            }
+
+            Leds.SetAllLeds(Color.Black);
+            _animationIdle = new Thread(() =>
+            {
+                PlayAnimation(info.Animation);
+            });
+            _animationIdle.Priority = ThreadPriority.Lowest;
+            _animationIdle.Start();
+        }
+
+
 
         private static void BoradcastState()
         {
             var json = JsonConvert.SerializeObject(_state);
             foreach (var listner in _sockets)
             {
-                if (listner.Connected)
+                try
                 {
-                    listner.Send(Encoding.UTF8.GetBytes(json));
-                    Console.WriteLine($"Broadcast to {listner.RemoteEndPoint} satus changed: {json}");
+                    Console.WriteLine($"Before broadcast {listner.RemoteEndPoint}");
+                    if (listner.Connected)
+                    {
+
+                        listner.Send(Encoding.UTF8.GetBytes(json));
+                        Console.WriteLine($"Broadcast to {listner.RemoteEndPoint} satus changed: {json}");
+                    }
+                    else
+                    {
+                        _sockets.Remove(listner);
+                        Console.WriteLine($"Client {listner.RemoteEndPoint} is not connected anymore");
+                    }
                 }
-                else
+                catch (SocketException ex)
                 {
                     _sockets.Remove(listner);
-                    Console.WriteLine($"Client {listner.RemoteEndPoint} is not connected anymore");
+                    Console.WriteLine($"Client {listner.RemoteEndPoint} is not connected anymore and was supposed to be connected! {ex}");
                 }
             }
 
@@ -579,6 +699,8 @@ namespace Nabaztag.Server
                 Thread.Sleep(1);
             }
         }
+
+        #endregion
 
         #region Recognize ASR
 

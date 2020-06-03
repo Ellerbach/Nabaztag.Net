@@ -90,7 +90,7 @@ namespace Nabaztag.Server
             //                        -- down -> (5) -- timer -> click_and_hold
             //                                    |
             //                                    -- up -> (6) -- timer -> tripple click!
-            //Console.WriteLine($"Pin change: {pinValueChangedEventArgs.ChangeType}");
+            Console.WriteLine($"Pin change: {pinValueChangedEventArgs.ChangeType}");
             var buttonValue = pinValueChangedEventArgs.ChangeType;
             switch (buttonValue)
             {
@@ -98,24 +98,7 @@ namespace Nabaztag.Server
                     if (_lastSequence == 0)
                     {
                         ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
-                    }
-                    else if (_lastSequence == 1)
-                    {
-                        ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
-                        _lastActionTimer.Change(DoubleClickTimeout, 0);
-                        _lastSequence++;
-                    }
-                    else if (_lastSequence == 3)
-                    {
-                        ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
-                        _lastActionTimer.Change(TripleClickTimeout, 0);
-                        _lastSequence++;
-                    }
-                    else if (_lastSequence == 5)
-                    {
-                        ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
-                        _lastActionTimer.Change(ClickAndHoldTimeout, 0);
-                        _lastSequence++;
+                        return;
                     }
 
                     break;
@@ -125,18 +108,7 @@ namespace Nabaztag.Server
                         ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Down, DateTimeEvent = DateTime.Now });
                         _lastActionTimer.Change(HoldTimeout, 0);
                         _lastSequence++;
-                    }
-                    else if (_lastSequence == 2)
-                    {
-                        ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Down, DateTimeEvent = DateTime.Now });
-                        _lastActionTimer.Change(ClickAndHoldTimeout, 0);
-                        _lastSequence++;
-                    }
-                    else if (_lastSequence == 4)
-                    {
-                        ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Down, DateTimeEvent = DateTime.Now });
-                        _lastActionTimer.Change(TripleClickTimeout, 0);
-                        _lastSequence++;
+                        return;
                     }
 
                     break;
@@ -144,6 +116,41 @@ namespace Nabaztag.Server
                 default:
                     _lastSequence = 0;
                     break;
+            }
+
+            if (_lastSequence == 1)
+            {
+                ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
+                _lastActionTimer.Change(DoubleClickTimeout, 0);
+                _lastSequence++;
+            }
+            else if (_lastSequence == 3)
+            {
+                ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
+                _lastActionTimer.Change(TripleClickTimeout, 0);
+                _lastSequence++;
+            }
+            else if (_lastSequence == 5)
+            {
+                ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Up, DateTimeEvent = DateTime.Now });
+                _lastActionTimer.Change(ClickAndHoldTimeout, 0);
+                _lastSequence++;
+            }
+            else if (_lastSequence == 2)
+            {
+                ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Down, DateTimeEvent = DateTime.Now });
+                _lastActionTimer.Change(ClickAndHoldTimeout, 0);
+                _lastSequence++;
+            }
+            else if (_lastSequence == 4)
+            {
+                ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.Down, DateTimeEvent = DateTime.Now });
+                _lastActionTimer.Change(TripleClickTimeout, 0);
+                _lastSequence++;
+            }
+            else if (_lastSequence ==6)
+            {
+                ButtonEvent?.Invoke(this, new ButtonEventArguments() { ButtonEventType = ButtonEventType.TripleClick, DateTimeEvent = DateTime.Now });
             }
         }
 

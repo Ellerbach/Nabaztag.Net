@@ -25,6 +25,8 @@ namespace Nabaztag.Server
         private int _pin;
         private Timer _lastActionTimer;
         private int _lastSequence = 0;
+        private bool _running = false;
+        private Thread _theLoop;
 
         public delegate void ButtonEventHandler(object sender, ButtonEventArguments buttonEventArgs);
         public event ButtonEventHandler ButtonEvent;
@@ -33,13 +35,39 @@ namespace Nabaztag.Server
         {
             //var unixDriver = UnixDriver.Create();
             var unixDriver = new LibGpiodDriver();
+            //var unixDriver = new SysFsDriver();
             _gpioController = gpioController ?? new GpioController(PinNumberingScheme.Logical, unixDriver);
             _shouldDispose = shoudlDispose;
             _pin = pin;
             _gpioController.OpenPin(_pin, PinMode.Input);
-            _gpioController.RegisterCallbackForPinValueChangedEvent(_pin, PinEventTypes.Falling | PinEventTypes.Rising, pinChangeEvent);
+            //_gpioController.RegisterCallbackForPinValueChangedEvent(_pin, PinEventTypes.Falling | PinEventTypes.Rising, pinChangeEvent);
             _lastActionTimer = new Timer(ButtonEventTimer);
+            _running = true;
+            _theLoop = new Thread(() =>
+            {
+                LoopState();
+            });
+            //_theLoop.Priority = ThreadPriority.Highest;
+            _theLoop.Start();
         }
+
+        private void LoopState()
+        {
+            PinValue lastPinValue = PinValue.High;
+            PinValue pinValue;
+            while(_running)
+            {
+                pinValue = _gpioController.Read(_pin);
+                if (pinValue != lastPinValue)
+                {
+                    lastPinValue = pinValue;
+                    var arg = new PinValueChangedEventArgs(lastPinValue == PinValue.Low ? PinEventTypes.Falling : PinEventTypes.Rising, _pin);
+                    pinChangeEvent(this, arg);
+                }
+                Thread.SpinWait(1);
+            }
+        }
+
 
         public PinValue PinValue => _gpioController.Read(_pin);
 
@@ -156,6 +184,7 @@ namespace Nabaztag.Server
 
         public void Dispose()
         {
+            _running = false;
             _gpioController?.ClosePin(_pin);
             if (_shouldDispose)
             {

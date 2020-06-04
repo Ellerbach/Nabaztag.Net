@@ -53,7 +53,7 @@ namespace Nabaztag.Server
 
         public void MoveAbsolute(Ear ear, EarDirection direction, byte position, bool blocking = false)
         {
-            string earCommand = $"{(direction == EarDirection.Forward ? '>' : '<')}{(char)position}{(blocking ? "." : "")}";
+            string earCommand = $"{(direction == EarDirection.Forward ? '>' : '<')}{(char)position}{(blocking ? "" : ".")}";
             byte[] command = Encoding.ASCII.GetBytes(earCommand);
             var earFile = ear == Ear.Left ? Left : Right;
             if (blocking)
@@ -89,7 +89,7 @@ namespace Nabaztag.Server
 
         public void MoveRelative(Ear ear, EarDirection direction, byte steps, bool blocking = false)
         {
-            string earCommand = $"{(direction == EarDirection.Forward ? '+' : '-')}{(char)steps}{(blocking ? "." : "")}";
+            string earCommand = $"{(direction == EarDirection.Forward ? '+' : '-')}{(char)steps}{(blocking ? "" : ".")}";
             byte[] command = Encoding.ASCII.GetBytes(earCommand);
             var earFile = ear == Ear.Left ? Left : Right;
             if (blocking)

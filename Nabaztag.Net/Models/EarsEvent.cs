@@ -15,19 +15,19 @@ namespace Nabaztag.Net.Models
         /// <summary>
         /// The left ear
         /// </summary>
-        [JsonProperty(PropertyName = "left")]
+        [JsonProperty(PropertyName = "left", NullValueHandling = NullValueHandling.Ignore)]
         public int? Left { get; set; }
 
         /// <summary>
         /// The right ear
         /// </summary>
-        [JsonProperty(PropertyName = "right")]
+        [JsonProperty(PropertyName = "right", NullValueHandling = NullValueHandling.Ignore)]
         public int? Right { get; set; }
 
         /// <summary>
         /// Ear moved
         /// </summary>
-        [JsonProperty(PropertyName = "ear")]
+        [JsonProperty(PropertyName = "ear", NullValueHandling = NullValueHandling.Ignore)]
         public Ear? Ear { get; set; }
 
         /// <summary>

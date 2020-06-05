@@ -43,7 +43,7 @@ namespace Nabaztag.Net.Sample
             //SendInfo();
             //PlayChoreographyCommand();
             //PlayAudioChoreoMessage();
-            //ResetAllEvents();
+            ResetAllEvents();
         }
 
         private static void GetStatistics()
@@ -131,7 +131,7 @@ namespace Nabaztag.Net.Sample
         private static void SubscribeToEvents()
         {
             //Console.WriteLine("Setting up Idle mode and all events, press a key to change mode");
-            var resp = _nabaztag.EventMode(ModeType.Idle, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr });
+            var resp = _nabaztag.EventMode(ModeType.Idle, new EventType[] { EventType.Button, EventType.Ears, EventType.Asr }, false, 30);
             if (resp.Status == Status.Ok)
                 Console.WriteLine("Your Nabaztag is in Idle mode and will receive all events");
             else

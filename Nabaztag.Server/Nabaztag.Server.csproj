@@ -95,6 +95,7 @@
     <Compile Include="Models\Authentication.cs" />
     <Compile Include="Models\ButtonEventArguments.cs" />
     <Compile Include="Models\EarDirection.cs" />
+    <Compile Include="Models\EarsEventArguments.cs" />
     <Compile Include="Models\EventNotification.cs" />
     <Compile Include="Models\Luis.cs" />
     <Compile Include="Models\Process.cs" />

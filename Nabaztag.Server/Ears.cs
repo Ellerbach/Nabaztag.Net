@@ -43,6 +43,9 @@ namespace Nabaztag.Server
         private int[] _earPointer = new int[2];
         private bool[] _isEarMoving = new bool[2];
 
+        public delegate void EarEventHandler(EarsEventArguments earsEventArguments);
+        public event EarEventHandler EarEvent;
+
         public Ears()
         {
             _earPointer[Left] = open($"{EarDriver}{Left}", FileOpenFlags.O_RDWR);
@@ -132,6 +135,11 @@ namespace Nabaztag.Server
 
                 return command[0];
             }
+        }
+
+        public void ProcessEvents(EarsEventArguments earEventHandler)
+        {
+            EarEvent?.Invoke(earEventHandler);
         }
 
         public int DetectEarPosition(Ear ear)

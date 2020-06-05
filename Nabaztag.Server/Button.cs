@@ -26,7 +26,6 @@ namespace Nabaztag.Server
         private Timer _lastActionTimer;
         private int _lastSequence = 0;
         private bool _running = false;
-        private Thread _theLoop;
 
         public delegate void ButtonEventHandler(object sender, ButtonEventArguments buttonEventArgs);
         public event ButtonEventHandler ButtonEvent;
@@ -42,32 +41,8 @@ namespace Nabaztag.Server
             _gpioController.OpenPin(_pin, PinMode.Input);
             //_gpioController.RegisterCallbackForPinValueChangedEvent(_pin, PinEventTypes.Falling | PinEventTypes.Rising, pinChangeEvent);
             _lastActionTimer = new Timer(ButtonEventTimer);
-            _running = true;
-            _theLoop = new Thread(() =>
-            {
-                LoopState();
-            });
-            //_theLoop.Priority = ThreadPriority.Highest;
-            _theLoop.Start();
-        }
-
-        private void LoopState()
-        {
-            PinValue lastPinValue = PinValue.High;
-            PinValue pinValue;
-            while(_running)
-            {
-                pinValue = _gpioController.Read(_pin);
-                if (pinValue != lastPinValue)
-                {
-                    lastPinValue = pinValue;
-                    var arg = new PinValueChangedEventArgs(lastPinValue == PinValue.Low ? PinEventTypes.Falling : PinEventTypes.Rising, _pin);
-                    pinChangeEvent(this, arg);
-                }
-                Thread.SpinWait(1);
-            }
-        }
-
+            _running = true;            
+        }        
 
         public PinValue PinValue => _gpioController.Read(_pin);
 
@@ -102,7 +77,7 @@ namespace Nabaztag.Server
             _lastSequence = 0;
         }
 
-        private void pinChangeEvent(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
+        public void PinChangeEvent(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
         {
             //
             // (0) -- down -> (1) -- timer -> hold

@@ -283,6 +283,7 @@ namespace Nabaztag.Server
         {
 
             IsChoreographyPlaying = true;
+
             //new Thread(() =>
             //{
                 using (FileStream fs = File.OpenRead(filePath))

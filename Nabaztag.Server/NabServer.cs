@@ -29,6 +29,7 @@ namespace Nabaztag.Server
         private const string PyNabDirectory = "pynab";
         private const string SoundDirectory = "sounds";
         private const string ChoreographyDirectory = "choreographies";
+        private const string DateTimeFormat = "yyyy-MM-dd\"T\"HH:mm:ss.ffffffzzz";
 
         public static Leds Leds;
         public static Button Button;
@@ -47,27 +48,28 @@ namespace Nabaztag.Server
         private static bool _applicationRunning = true;
         private static string _locale;
         private static Settings _settings;
-        private static List<Thread> _listnerThread;
-        private static object _threadListLock;
 
         private static List<Socket> _sockets;
         private static Queue<Process> _queueProcess;
+        private static object _queueLock;
         private static object _socketLock;
         private static object _animationLock;
+        private static object _eventIdLock;
+        private static bool _isRecognizing = false;
 
-        //private static Thread _animationIdle;
         private static Animation _animation = null;
+        private static Thread _theLoop;
 
         static void Main(string[] args)
         {
-            _listnerThread = new List<Thread>();
             _path = Directory.GetCurrentDirectory();
             _eventId = new Dictionary<Socket, EventNotification>();
             _sockets = new List<Socket>();
             _queueProcess = new Queue<Process>();
             _socketLock = new object();
-            _threadListLock = new object();
             _animationLock = new object();
+            _queueLock = new object();
+            _eventIdLock = new object();
 
             try
             {
@@ -80,9 +82,17 @@ namespace Nabaztag.Server
             Leds = new Leds();
             Button = new Button(PinButton);
             Button.ButtonEvent += Button_ButtonEvent;
+            Ears = new Ears();
+            Ears.EarEvent += Ears_EarEvent;
+
+            _theLoop = new Thread(() =>
+            {
+                LoopState();
+            });
+            _theLoop.Priority = ThreadPriority.Lowest;
+            _theLoop.Start();
 
             Sound = new Sound();
-            Ears = new Ears();
 
             WakeUp();
 
@@ -119,17 +129,17 @@ namespace Nabaztag.Server
                     PlayAnimation(toPlay);
                     //Thread.Sleep(10);
 
-                    var numToProcess = _queueProcess.Count();
+                    int numToProcess = 0;
+                    lock (_queueLock)
+                    {
+                        numToProcess = _queueProcess.Count();
+                    }
                     for (int i = 0; i < numToProcess; i++)
                     {
-                        var proc = _queueProcess.Peek();
-                        var numListners = _sockets.Count();
-                        for (int sk = 0; sk < numListners; sk++)
+                        Process proc;
+                        lock (_queueLock)
                         {
-                            if (!_sockets[sk].Connected)
-                            {
-                                _sockets.Remove(_sockets[sk]);
-                            }
+                            proc = _queueProcess.Peek();
                         }
 
                         switch (proc.PaquetType)
@@ -158,6 +168,8 @@ namespace Nabaztag.Server
                             case PaquetType.Cancel:
                             case PaquetType.Mode:
                             case PaquetType.EarEvent:
+
+                                break;
                             case PaquetType.EarsEvent:
                             case PaquetType.ButtonEvent:
                             case PaquetType.Response:
@@ -167,7 +179,11 @@ namespace Nabaztag.Server
                             default:
                                 break;
                         }
-                        _queueProcess.Dequeue();
+
+                        lock (_queueLock)
+                        {
+                            _queueProcess.Dequeue();
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -181,26 +197,85 @@ namespace Nabaztag.Server
             _applicationRunning = false;
             _tcpListener.Stop();
 
-            try
-            {
-                listn.Abort();
-                //lock (_threadListLock)
-                //{
-                //    foreach (var th in _listnerThread)
-                //    {
-                //        if (th.IsAlive)
-                //        {
-                //            th.Abort();
-                //        }
-                //    }
-                //}
-            }
-            catch
-            { }
+            listn.Abort();
 
             Button.Dispose();
 
             GoToSleep();
+        }
+
+        private static void Ears_EarEvent(EarsEventArguments earsEventArguments)
+        {
+            try
+            {
+                Console.WriteLine($"Ear: {earsEventArguments.Ear}, Position: {earsEventArguments.Position}, DateTime: {earsEventArguments.DateTimeEvent}");
+                lock (_eventIdLock)
+                {
+                    foreach (var evts in _eventId)
+                    {
+                        if (evts.Value.EventType.Contains(EventType.Ears))
+                        {
+                            var earsEvent = new EarsEvent() { Time = earsEventArguments.DateTimeEvent.ToString(DateTimeFormat) };
+                            if (earsEventArguments.Ear == Ear.Left)
+                            {
+                                earsEvent.Left = earsEventArguments.Position;
+                            }
+                            else
+                            {
+                                earsEvent.Right = earsEventArguments.Position;
+                            }
+
+                            SendMessage(earsEvent, evts.Key);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ears Event Exception: {ex}");
+            }
+
+        }
+
+        private static void LoopState()
+        {
+            PinValue lastPinValue = PinValue.High;
+            PinValue pinValue;
+            int[] earPos = new int[2] { 0, 0 };
+            int[] lastEarPos = new int[2] { 0, 0 };
+            int i;
+            while (_applicationRunning)
+            {
+                pinValue = Button.PinValue;
+                if (pinValue != lastPinValue)
+                {
+                    lastPinValue = pinValue;
+                    var arg = new PinValueChangedEventArgs(lastPinValue == PinValue.Low ? PinEventTypes.Falling : PinEventTypes.Rising, PinButton);
+                    Button.PinChangeEvent(Button, arg);
+                }
+                Thread.SpinWait(1);
+
+                for (i = 0; i < 2; i++)
+                {
+                    if (!IsBusy)
+                    {
+                        earPos[i] = Ears.GetEarPosition((Ear)i);
+                        if (earPos[i] != lastEarPos[i])
+                        {
+                            if (earPos[i] != 109)
+                            {
+                                Ears.ProcessEvents(new EarsEventArguments() { Ear = (Ear)i, Position = earPos[i], DateTimeEvent = DateTime.Now });
+                            }
+
+                            lastEarPos[i] = earPos[i];
+                        }
+                    }
+                    else
+                    {
+                        lastEarPos[i] = Ears.GetEarPosition((Ear)i);
+                    }
+                }
+            }
         }
 
         private static void Button_ButtonEvent(object sender, ButtonEventArguments buttonEventArgs)
@@ -208,28 +283,54 @@ namespace Nabaztag.Server
             try
             {
                 Console.WriteLine($"Event: {buttonEventArgs.ButtonEventType}, {buttonEventArgs.DateTimeEvent}");
+                lock (_eventIdLock)
+                {
+                    foreach (var evts in _eventId)
+                    {
+                        if (evts.Value.EventType.Contains(EventType.Ears))
+                        {
+                            var buttonEvent = new ButtonEvent() { Time = buttonEventArgs.DateTimeEvent.ToString(DateTimeFormat), Event = buttonEventArgs.ButtonEventType };                            
+                            SendMessage(buttonEvent, evts.Key);
+                        }
+                    }
+                }
+
                 if ((buttonEventArgs.ButtonEventType == ButtonEventType.DoubleClick) && (!Choreography.IsChoreographyPlaying))
                 {
                     var fileName = FindChoreography("*.chor");
-                    Console.WriteLine($"Playing choreography ${fileName}");
+                    //Console.WriteLine($"Playing choreography ${fileName}");
                     Choreography.ReadChoreography(fileName);
                 }
                 else if (buttonEventArgs.ButtonEventType == ButtonEventType.Hold)
                 {
-                    // Console.WriteLine("Playing listening");
-                    _state.State = StateType.Playing;
-                    Sound.Play($"{_path}/sounds/listen.mp3");
-                    while (Sound.IsPlaying)
+                    if (!_isRecognizing)
                     {
-                        Thread.Sleep(1);
-                    }
+                        // Console.WriteLine("Playing listening");
+                        _state.State = StateType.Playing;
+                        Sound.Play($"{_path}/sounds/listen.mp3");
+                        while (Sound.IsPlaying)
+                        {
+                            Thread.Sleep(1);
+                        }
 
-                    Console.WriteLine("Recording");
-                    _state.State = StateType.Recording;
-                    Sound.StartRecording();
+                        Console.WriteLine("Recording");
+                        _state.State = StateType.Recording;
+                        Sound.StartRecording();
+                    }
+                    else
+                    {
+                        _state.State = StateType.Playing;
+                        Sound.Play($"{_path}/sounds/{_locale}/asr/*.mp3");
+                        while (Sound.IsPlaying)
+                        {
+                            Thread.Sleep(1);
+                        }
+                        _state.State = StateType.Idle;
+                    }
                 }
                 else if ((Sound.IsRecording) && (buttonEventArgs.ButtonEventType == ButtonEventType.Up))
                 {
+                    _isRecognizing = true;
                     Sound.StopRecording();
                     // Need to wait for the recording to fully finish
                     // As it runs chunks of 1 second
@@ -256,21 +357,24 @@ namespace Nabaztag.Server
                         Console.WriteLine($"Top Intent: {asr}");
                         if (!string.IsNullOrEmpty(asr))
                         {
-                            foreach (var evts in _eventId)
+                            lock (_eventIdLock)
                             {
-                                if (evts.Value.EventType.Contains(EventType.Asr))
+                                foreach (var evts in _eventId)
                                 {
-                                    if (evts.Key.Connected)
+                                    if (evts.Value.EventType.Contains(EventType.Asr))
                                     {
-                                        Console.WriteLine($"Sending event asr to: {evts.Key.RemoteEndPoint}");
-                                        AsrEvent asrEvent = new AsrEvent() { Time = DateTime.Now.ToString("yyyy-MM-dd\"T\"HH:mm:ss.ffffffzzz") };
-                                        Nlu nlu = new Nlu() { Intent = asr.ToLower() };
-                                        asrEvent.Nlu = nlu;
-                                        SendMessage(asrEvent, evts.Key);
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine($"Not connected: {evts.Key.RemoteEndPoint}");
+                                        if (evts.Key.Connected)
+                                        {
+                                            Console.WriteLine($"Sending event asr to: {evts.Key.RemoteEndPoint}");
+                                            AsrEvent asrEvent = new AsrEvent() { Time = DateTime.Now.ToString(DateTimeFormat) };
+                                            Nlu nlu = new Nlu() { Intent = asr.ToLower() };
+                                            asrEvent.Nlu = nlu;
+                                            SendMessage(asrEvent, evts.Key);
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine($"Not connected: {evts.Key.RemoteEndPoint}");
+                                        }
                                     }
                                 }
                             }
@@ -293,11 +397,15 @@ namespace Nabaztag.Server
                             }
                         }
                     }
+
+                    _isRecognizing = false;
                 }
 
             }
             catch (Exception ex)
             {
+                _isRecognizing = false;
+                _state.State = StateType.Idle;
                 Console.WriteLine($"Ups: {ex}");
             }
         }
@@ -368,7 +476,7 @@ namespace Nabaztag.Server
                                             }
 
                                             SendMessage(response, listner);
-                                            lock (_socketLock)
+                                            lock (_queueLock)
                                             {
                                                 _queueProcess.Enqueue(new Process() { PaquetType = PaquetType.Information, ToProcess = info });
                                             }
@@ -382,7 +490,7 @@ namespace Nabaztag.Server
                                             }
 
                                             SendMessage(response, listner);
-                                            lock (_socketLock)
+                                            lock (_queueLock)
                                             {
                                                 _queueProcess.Enqueue(new Process() { PaquetType = PaquetType.Ears, ToProcess = ears });
                                             }
@@ -403,7 +511,7 @@ namespace Nabaztag.Server
                                             }
 
                                             SendMessage(response, listner);
-                                            lock (_socketLock)
+                                            lock (_queueLock)
                                             {
                                                 _queueProcess.Enqueue(new Process() { PaquetType = PaquetType.Command, ToProcess = cmd });
                                             }
@@ -423,7 +531,7 @@ namespace Nabaztag.Server
                                             }
 
                                             SendMessage(response, listner);
-                                            lock (_socketLock)
+                                            lock (_queueLock)
                                             {
                                                 _queueProcess.Enqueue(new Process() { PaquetType = PaquetType.Message, ToProcess = msg });
                                             }
@@ -449,7 +557,7 @@ namespace Nabaztag.Server
                                             var sleep = JsonConvert.DeserializeObject<Sleep>(ret);
                                             response.RequestId = sleep.RequestId;
                                             SendMessage(response, listner);
-                                            lock (_socketLock)
+                                            lock (_queueLock)
                                             {
                                                 _queueProcess.Enqueue(new Process() { PaquetType = PaquetType.Sleep, ToProcess = sleep });
                                             }
@@ -462,23 +570,26 @@ namespace Nabaztag.Server
                                             EventNotification eventNotification = new EventNotification() { RequestId = mode.RequestId };
                                             eventNotification.Mode = mode.Mode;
                                             eventNotification.EventType = mode.Events.ToArray();
-                                            // To DO : manage the events
-                                            if (_eventId.ContainsKey(listner))
+
+                                            lock (_eventIdLock)
                                             {
-                                                if (mode.Events.Count() > 0)
+                                                if (_eventId.ContainsKey(listner))
                                                 {
-                                                    _eventId[listner] = eventNotification;
+                                                    if (mode.Events.Count() > 0)
+                                                    {
+                                                        _eventId[listner] = eventNotification;
+                                                    }
+                                                    else
+                                                    {
+                                                        _eventId.Remove(listner);
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    _eventId.Remove(listner);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (mode.Events.Count() > 0)
-                                                {
-                                                    _eventId.Add(listner, eventNotification);
+                                                    if (mode.Events.Count() > 0)
+                                                    {
+                                                        _eventId.Add(listner, eventNotification);
+                                                    }
                                                 }
                                             }
 
@@ -488,7 +599,7 @@ namespace Nabaztag.Server
                                             response.RequestId = test.RequestId;
                                             Console.WriteLine($"{nameof(test)}");
                                             SendMessage(response, listner);
-                                            lock (_socketLock)
+                                            lock (_queueLock)
                                             {
                                                 _queueProcess.Enqueue(new Process() { PaquetType = PaquetType.Test, ToProcess = test });
                                             }
@@ -545,13 +656,18 @@ namespace Nabaztag.Server
                     {
                         _sockets.Remove(listner);
                     }
+
+                    lock (_eventIdLock)
+                    {
+                        if (_eventId.ContainsKey(listner))
+                        {
+                            _eventId.Remove(listner);
+                        }
+                    }
+
                     _connectedClients--;
                 });
                 th.Priority = ThreadPriority.Lowest;
-                //lock (_threadListLock)
-                //{
-                //    _listnerThread.Add(th);
-                //}
                 th.Start();
             }
         }
@@ -595,11 +711,11 @@ namespace Nabaztag.Server
                 {
                     if (body.ChoreographyList != null)
                     {
-                        Choreography.ReadChoreography(FindChoreography(body.ChoreographyList));
-                        while (IsBusy)
-                        {
-                            Thread.Sleep(100);
-                        }
+                        ProcessChoreography(body.ChoreographyList);
+                        //while (IsBusy)
+                        //{
+                        //    Thread.Sleep(100);
+                        //}
                     }
 
                     foreach (var audio in body?.AudioList)
@@ -662,7 +778,7 @@ namespace Nabaztag.Server
                 {
                     if (cor.ChoreographyList != null)
                     {
-                        Choreography.ReadChoreography(FindChoreography(cor.ChoreographyList));
+                        ProcessChoreography(cor.ChoreographyList);
                     }
 
                     if (cor.AudioList != null)
@@ -675,6 +791,23 @@ namespace Nabaztag.Server
                 }
                 _state.State = StateType.Idle;
                 BoradcastState();
+            }
+        }
+
+        private static void ProcessChoreography(string fileOrStream)
+        {
+            if (fileOrStream.Contains("data:application"))
+            {
+                var dataStream = fileOrStream.Split(',')[1];
+                var bytesStream = Convert.FromBase64String(dataStream);
+                using (var memStream = new MemoryStream(bytesStream))
+                {
+                    Choreography.ReadChoreography(memStream);
+                }
+            }
+            else
+            {
+                Choreography.ReadChoreography(FindChoreography(fileOrStream));
             }
         }
 
@@ -733,7 +866,18 @@ namespace Nabaztag.Server
                 Console.WriteLine($"Removing one endpoint");
                 if (handler != null)
                 {
-                    _sockets.Remove(handler);
+                    lock (_socketLock)
+                    {
+                        _sockets.Remove(handler);
+                    }
+
+                    lock (_eventIdLock)
+                    {
+                        if (_eventId.ContainsKey(handler))
+                        {
+                            _eventId.Remove(handler);
+                        }
+                    }
                 }
             }
         }

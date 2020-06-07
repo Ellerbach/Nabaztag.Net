@@ -563,7 +563,17 @@ namespace Nabaztag.Server
                                             }
                                             break;
                                         case PaquetType.Mode:
-                                            var mode = JsonConvert.DeserializeObject<EventMode>(ret);
+                                            // We need to handle the rfid event deserialization
+                                            // It is like rfid/appname
+                                            // In case of error, we will assume it's because of rfid
+                                            // And we will broadcast any rfid found to all services.
+                                            // Services will filter anyway their events
+                                            var serSettings = new JsonSerializerSettings
+                                            {
+                                                Error = HandleDeserializationError
+                                            };
+
+                                            var mode = JsonConvert.DeserializeObject<EventMode>(ret, serSettings);
                                             response.RequestId = mode.RequestId;
                                             SendMessage(response, listner);
 
@@ -670,6 +680,24 @@ namespace Nabaztag.Server
                 th.Priority = ThreadPriority.Lowest;
                 th.Start();
             }
+        }
+
+        private static void HandleDeserializationError(object sender, Newtonsoft.Json.Serialization.ErrorEventArgs errorArgs)
+        {
+            errorArgs.ErrorContext.Handled = true;
+            var eventMode = errorArgs.CurrentObject as EventMode;
+
+            if (eventMode == null)
+            {
+                return;
+            }
+
+            if (eventMode.Events == null)
+            {
+                eventMode.Events = new EventType[0];
+            }
+
+            eventMode.Events.Append(EventType.Rfid);
         }
 
         private static void ProcessWakeUp()
@@ -848,7 +876,7 @@ namespace Nabaztag.Server
             var json = JsonConvert.SerializeObject(objToSend) + "\r\n";
             byte[] buff = Encoding.UTF8.GetBytes(json);
             listener.BeginSend(buff, 0, buff.Length, SocketFlags.None, new AsyncCallback(EndSend), listener);
-            Console.WriteLine($"Sent response: {json}");
+            //Console.WriteLine($"Sent response: {json}");
         }
 
         private static void EndSend(IAsyncResult ar)

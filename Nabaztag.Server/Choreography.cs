@@ -180,13 +180,11 @@ namespace Nabaztag.Server
                 }
 
                 opCode = (OpCode)fs.ReadByte();
-                //Console.Write($"{nameof(delay)}: {delay}, {nameof(OpCode)}: {opCode} ");
 
                 switch (opCode)
                 {
                     case OpCode.FrameDuration:
                         frameDuration = fs.ReadByte();
-                        // Console.WriteLine($"{nameof(frameDuration)}: {frameDuration}");
                         break;
                     case OpCode.SetLedColor:
                         Led led = (Led)fs.ReadByte();
@@ -197,37 +195,31 @@ namespace Nabaztag.Server
                         fs.ReadByte();
                         fs.ReadByte();
                         NabServer.Leds.SetLedAndDisplay(led, Color.FromArgb(red, green, blue));
-                        // Console.WriteLine($"{nameof(Led)}: {led}, {nameof(red)}: {red}, {nameof(green)}: {green}, {nameof(blue)}: {blue}");
                         break;
                     case OpCode.SetMotor:
                         Ear ear = (Ear)fs.ReadByte();
                         int position = fs.ReadByte();
                         var direction = (EarDirection)fs.ReadByte();
-                        // Console.WriteLine($"{nameof(ear)}: {ear}, {nameof(position)}: {position}, {nameof(direction)}: {direction}");
                         NabServer.Ears.MoveAbsolute(ear, direction, (byte)position);
                         break;
                     case OpCode.SetLedsColor:
                         int reds = fs.ReadByte();
                         int greens = fs.ReadByte();
                         int blues = fs.ReadByte();
-                        // Console.WriteLine($"{nameof(reds)}: {reds}, {nameof(greens)}: {greens}, {nameof(blues)}: {blues}");
                         NabServer.Leds.SetAllLeds(Color.FromArgb(reds, greens, blues));
                         break;
                     case OpCode.SetLedOff:
                         Led ledOff = (Led)fs.ReadByte();
-                        // Console.WriteLine($"{nameof(Led)}: {ledOff}");
                         NabServer.Leds.SetAllLeds(Color.Black);
                         break;
                     case OpCode.SetLedPalette:
                         Led ledPalette = (Led)fs.ReadByte();
                         int palette = fs.ReadByte() & 0x03;
-                        // Console.WriteLine($"{nameof(Led)}: {ledPalette}, {nameof(palette)}: {palette}");
                         NabServer.Leds.SetLedAndDisplay(ledPalette, _currentPalette[_palette[palette]]);
                         break;
                     case OpCode.Avance:
                         Ear earAvance = (Ear)fs.ReadByte();
                         int delta = fs.ReadByte();
-                        // Console.WriteLine($"{nameof(Ear)}: {earAvance}, {nameof(delta)}: {delta}");
                         NabServer.Ears.MoveRelative(earAvance, _taichiEarDirection[(int)earAvance], (byte)delta);
                         break;
                     case OpCode.Ifne:
@@ -235,7 +227,6 @@ namespace Nabaztag.Server
                         int sizeHigh = fs.ReadByte();
                         int sizeLow = fs.ReadByte();
                         int size = (sizeHigh << 8) + sizeLow;
-                        // Console.WriteLine($"{nameof(ifneNumber)}: {ifneNumber}, {nameof(sizeHigh)}: {sizeHigh}, {nameof(sizeLow)}: {sizeLow}, {nameof(size)}: {size}");
                         if (_taichiNumber != ifneNumber)
                         {
                             fs.Position += size;
@@ -252,7 +243,6 @@ namespace Nabaztag.Server
                     case OpCode.SetMotorDirection:
                         var motor = fs.ReadByte();
                         var directionMotor = (EarDirection)fs.ReadByte();
-                        // Console.WriteLine($"{nameof(Ear)}: {motor}, {nameof(directionMotor)}: {directionMotor}");
                         _taichiEarDirection[motor] = directionMotor;
                         break;
                     case OpCode.RandomMidi:
@@ -266,12 +256,8 @@ namespace Nabaztag.Server
                         NabServer.Sound.Play($"{path}/sounds/{fileName}");
                         break;
                     case OpCode.Nop:
-                        // Console.WriteLine();
                         break;
                     default:
-                        // Console.ForegroundColor = ConsoleColor.Red;
-                        // Console.WriteLine("Wrong or non existing code");
-                        // Console.ResetColor();
                         break;
                 }
             }
@@ -284,22 +270,18 @@ namespace Nabaztag.Server
 
             IsChoreographyPlaying = true;
 
-            //new Thread(() =>
-            //{
-                using (FileStream fs = File.OpenRead(filePath))
-                {
-                    if (fs.Length < 4)
-                        throw new Exception("Not a chor file");
-                    byte[] header = new byte[4];
-                    fs.Read(header, 0, header.Length);
-                    if (!((header[0] == 1) && (header[1] == 1) && (header[2] == 1) && (header[3] == 1)))
-                        throw new Exception("Not a chor file, header not 1 1 1 1");
+            using (FileStream fs = File.OpenRead(filePath))
+            {
+                if (fs.Length < 4)
+                    throw new Exception("Not a chor file");
+                byte[] header = new byte[4];
+                fs.Read(header, 0, header.Length);
+                if (!((header[0] == 1) && (header[1] == 1) && (header[2] == 1) && (header[3] == 1)))
+                    throw new Exception("Not a chor file, header not 1 1 1 1");
 
-                    ReadChoreography(fs);
-                    IsChoreographyPlaying = false;
-                }
-            //}).Start();
-
+                ReadChoreography(fs);
+                IsChoreographyPlaying = false;
+            }
         }
     }
 }

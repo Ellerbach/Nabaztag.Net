@@ -32,13 +32,12 @@ namespace Nabaztag.Server
 
         public Button(int pin, GpioController gpioController = null, bool shoudlDispose = true)
         {
-            //var unixDriver = UnixDriver.Create();
-            var unixDriver = new LibGpiodDriver();
-            //var unixDriver = new SysFsDriver();
+            var unixDriver = new LibGpiodDriver();        
             _gpioController = gpioController ?? new GpioController(PinNumberingScheme.Logical, unixDriver);
             _shouldDispose = shoudlDispose;
             _pin = pin;
             _gpioController.OpenPin(_pin, PinMode.Input);
+            // For some reason, the libgpiod doesn't work properly for the trigging, so need to be done manually
             //_gpioController.RegisterCallbackForPinValueChangedEvent(_pin, PinEventTypes.Falling | PinEventTypes.Rising, pinChangeEvent);
             _lastActionTimer = new Timer(ButtonEventTimer);
             _running = true;            
@@ -93,7 +92,7 @@ namespace Nabaztag.Server
             //                        -- down -> (5) -- timer -> click_and_hold
             //                                    |
             //                                    -- up -> (6) -- timer -> tripple click!
-            Console.WriteLine($"Pin change: {pinValueChangedEventArgs.ChangeType}");
+            Log.LogInfo.Log($"Pin change: {pinValueChangedEventArgs.ChangeType}", Log.LogLevel.Debug);
             var buttonValue = pinValueChangedEventArgs.ChangeType;
             switch (buttonValue)
             {

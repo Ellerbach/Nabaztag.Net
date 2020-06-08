@@ -92,6 +92,7 @@
     <Compile Include="Choreography.cs" />
     <Compile Include="Ears.cs" />
     <Compile Include="Leds.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Models\Authentication.cs" />
     <Compile Include="Models\ButtonEventArguments.cs" />
     <Compile Include="Models\EarDirection.cs" />

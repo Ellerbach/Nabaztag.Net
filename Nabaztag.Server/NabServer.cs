@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.SessionState;
 using System.Xml.Linq;
+using static Nabaztag.Server.Log;
 
 namespace Nabaztag.Server
 {
@@ -62,6 +63,38 @@ namespace Nabaztag.Server
 
         static void Main(string[] args)
         {
+            LogInfo.FileName = "/var/log/nabaztag-net.log";
+            if(!File.Exists(LogInfo.FileName))
+            {
+                File.Create(LogInfo.FileName);
+            }
+            // Determine if we have arguments and one is about log lever
+            if (args.Length > 0)
+            {
+                if (args.Contains("--debug") || args.Contains("-d"))
+                {
+                    LogInfo.LogLevel = LogLevel.Debug;
+                }
+                else if (args.Contains("--info") || args.Contains("-i"))
+                {
+                    LogInfo.LogLevel = LogLevel.Info;
+                }
+                else
+                {
+                    LogInfo.LogLevel = LogLevel.None;
+                }
+
+                if (args.Contains("--file") || args.Contains("-f"))
+                {
+                    LogInfo.LogTo = LogTo.File;
+                }
+
+                if (args.Contains("--console") || args.Contains("-c"))
+                {
+                    LogInfo.LogTo |= LogTo.Console;
+                }
+            }
+
             _path = Directory.GetCurrentDirectory();
             _eventId = new Dictionary<Socket, EventNotification>();
             _sockets = new List<Socket>();
@@ -79,20 +112,23 @@ namespace Nabaztag.Server
             catch
             { }
 
-            Leds = new Leds();
+            try
+            {
+                Leds = new Leds();
             Button = new Button(PinButton);
             Button.ButtonEvent += Button_ButtonEvent;
             Ears = new Ears();
             Ears.EarEvent += Ears_EarEvent;
+            Sound = new Sound();
+            LogInfo.Log($"Leds, Button, Ears, Sound created", LogLevel.Info);
 
             _theLoop = new Thread(() =>
             {
                 LoopState();
             });
-            _theLoop.Priority = ThreadPriority.Lowest;
+            _theLoop.Priority = ThreadPriority.AboveNormal;
             _theLoop.Start();
-
-            Sound = new Sound();
+            LogInfo.Log($"Event loop created", LogLevel.Info);
 
             WakeUp();
 
@@ -102,9 +138,6 @@ namespace Nabaztag.Server
             byte[] buffer = new byte[7000];
 
             _state.State = StateType.Idle;
-            Console.WriteLine("Press the button and watch the events, press a key to exit");
-            Console.WriteLine("Press long to record and it will play after");
-            Console.WriteLine("Double click to play a choreography");
 
             var listn = new Thread(() =>
             {
@@ -116,6 +149,7 @@ namespace Nabaztag.Server
             });
             listn.Priority = ThreadPriority.Lowest;
             listn.Start();
+            LogInfo.Log($"Listening thread created", LogLevel.Info);
 
             while (!Console.KeyAvailable)
             {
@@ -189,26 +223,35 @@ namespace Nabaztag.Server
                 catch (Exception ex)
                 {
                     _state.State = StateType.Idle;
-                    Console.WriteLine($"Exception in main loop: {ex}");
+                    LogInfo.Log($"Exception in main loop: {ex}", LogLevel.Info);
                 }
 
             }
 
-            _applicationRunning = false;
-            _tcpListener.Stop();
+            
+                _applicationRunning = false;
+                _tcpListener.Stop();
+                // Just waiting to make sure all will stop
+                Thread.Sleep(2000);
+                LogInfo.Log($"All services stopped", LogLevel.Info);
 
-            listn.Abort();
+                Button.Dispose();
 
-            Button.Dispose();
+            }
+            catch (Exception ex)
+            {
+                LogInfo.Log($"Exception in main: {ex}", LogLevel.Info);
+            }
 
             GoToSleep();
+            LogInfo.Log($"I'm stopped and sleeping!", LogLevel.Info);
         }
 
         private static void Ears_EarEvent(EarsEventArguments earsEventArguments)
         {
             try
             {
-                Console.WriteLine($"Ear: {earsEventArguments.Ear}, Position: {earsEventArguments.Position}, DateTime: {earsEventArguments.DateTimeEvent}");
+                LogInfo.Log($"Ear: {earsEventArguments.Ear}, Position: {earsEventArguments.Position}, DateTime: {earsEventArguments.DateTimeEvent}", LogLevel.Debug);
                 lock (_eventIdLock)
                 {
                     foreach (var evts in _eventId)
@@ -232,7 +275,7 @@ namespace Nabaztag.Server
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ears Event Exception: {ex}");
+                LogInfo.Log($"Exception in {nameof(Ears_EarEvent)}: {ex}", LogLevel.Info);
             }
 
         }
@@ -282,14 +325,14 @@ namespace Nabaztag.Server
         {
             try
             {
-                Console.WriteLine($"Event: {buttonEventArgs.ButtonEventType}, {buttonEventArgs.DateTimeEvent}");
+                LogInfo.Log($"Event: {buttonEventArgs.ButtonEventType}, {buttonEventArgs.DateTimeEvent}", LogLevel.Debug);
                 lock (_eventIdLock)
                 {
                     foreach (var evts in _eventId)
                     {
                         if (evts.Value.EventType.Contains(EventType.Ears))
                         {
-                            var buttonEvent = new ButtonEvent() { Time = buttonEventArgs.DateTimeEvent.ToString(DateTimeFormat), Event = buttonEventArgs.ButtonEventType };                            
+                            var buttonEvent = new ButtonEvent() { Time = buttonEventArgs.DateTimeEvent.ToString(DateTimeFormat), Event = buttonEventArgs.ButtonEventType };
                             SendMessage(buttonEvent, evts.Key);
                         }
                     }
@@ -298,28 +341,32 @@ namespace Nabaztag.Server
                 if ((buttonEventArgs.ButtonEventType == ButtonEventType.DoubleClick) && (!Choreography.IsChoreographyPlaying))
                 {
                     var fileName = FindChoreography("*.chor");
-                    //Console.WriteLine($"Playing choreography ${fileName}");
+                    LogInfo.Log($"Playing choreography ${fileName}", LogLevel.Info);
                     Choreography.ReadChoreography(fileName);
                 }
                 else if (buttonEventArgs.ButtonEventType == ButtonEventType.Hold)
                 {
                     if (!_isRecognizing)
                     {
-                        // Console.WriteLine("Playing listening");
                         _state.State = StateType.Playing;
+                        LogInfo.Log($"About to record", LogLevel.Debug);
                         Sound.Play($"{_path}/sounds/listen.mp3");
+                        Leds.SetAllLeds(Color.Black);
+                        Leds.SetLedAndDisplay(Led.Nose, Color.Red);
                         while (Sound.IsPlaying)
                         {
                             Thread.Sleep(1);
                         }
 
-                        Console.WriteLine("Recording");
+                        LogInfo.Log($"Recording", LogLevel.Info);
                         _state.State = StateType.Recording;
                         Sound.StartRecording();
                     }
                     else
                     {
                         _state.State = StateType.Playing;
+                        LogInfo.Log($"Already recording", LogLevel.Info);
+                        Leds.SetAllLeds(Color.Black);
                         Sound.Play($"{_path}/sounds/{_locale}/asr/*.mp3");
                         while (Sound.IsPlaying)
                         {
@@ -340,49 +387,38 @@ namespace Nabaztag.Server
                     }
 
                     _state.State = StateType.Playing;
-                    Sound.Play($"{_path}/sounds/acquired.mp3");
-                    //while (Sound.IsPlaying)
-                    //{
-                    //    Thread.Sleep(1);
-                    //}
-
-                    //Sound.Play($"{_path}/record.wav");
-                    _state.State = StateType.Idle;
+                    Sound.Play($"{_path}/sounds/acquired.mp3");                 
+                    Leds.SetLedAndDisplay(Led.Nose, Color.BlueViolet);
                     // Now do the recognition
+                    LogInfo.Log($"Recognizing recording", LogLevel.Info);
                     var phrase = Recognize($"{_path}/record.wav");
-                    Console.WriteLine($"Prase recognized: {phrase}");
+                    LogInfo.Log($"Prase recognized: {phrase}", LogLevel.Debug);
                     if (!string.IsNullOrEmpty(phrase))
                     {
+                        Leds.SetLedAndDisplay(Led.Nose, Color.Blue);
                         var asr = GetTopIntent(phrase);
-                        Console.WriteLine($"Top Intent: {asr}");
+                        LogInfo.Log($"Top Intent: {asr}", LogLevel.Debug);
                         if (!string.IsNullOrEmpty(asr))
                         {
+                            Leds.SetLed(Led.Nose, Color.Green);
                             lock (_eventIdLock)
                             {
                                 foreach (var evts in _eventId)
                                 {
                                     if (evts.Value.EventType.Contains(EventType.Asr))
                                     {
-                                        if (evts.Key.Connected)
-                                        {
-                                            Console.WriteLine($"Sending event asr to: {evts.Key.RemoteEndPoint}");
-                                            AsrEvent asrEvent = new AsrEvent() { Time = DateTime.Now.ToString(DateTimeFormat) };
-                                            Nlu nlu = new Nlu() { Intent = asr.ToLower() };
-                                            asrEvent.Nlu = nlu;
-                                            SendMessage(asrEvent, evts.Key);
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine($"Not connected: {evts.Key.RemoteEndPoint}");
-                                        }
+                                        AsrEvent asrEvent = new AsrEvent() { Time = DateTime.Now.ToString(DateTimeFormat) };
+                                        Nlu nlu = new Nlu() { Intent = asr.ToLower() };
+                                        asrEvent.Nlu = nlu;
+                                        SendMessage(asrEvent, evts.Key);
                                     }
                                 }
                             }
 
                             if (asr.ToLower() == "clock")
                             {
+                                LogInfo.Log($"TTS Clock", LogLevel.Debug);
                                 var dt = DateTime.Now;
-                                //Speak();
                                 var toSay = string.Format(_settings.ClockPhrase, dt.Hour, dt.Minute, dt.Second);
                                 string host = $"https://{_settings.CognitiveRegion}.tts.speech.microsoft.com/cognitiveservices/v1";
                                 string endpoint = $"https://{_settings.CognitiveRegion}.api.cognitive.microsoft.com/sts/v1.0/issueToken";
@@ -395,9 +431,12 @@ namespace Nabaztag.Server
                                 }
                                 Sound.Play(ttsFilePath);
                             }
+
+                            Leds.SetLed(Led.Nose, Color.Black);
                         }
                     }
 
+                    _state.State = StateType.Idle;
                     _isRecognizing = false;
                 }
 
@@ -406,7 +445,7 @@ namespace Nabaztag.Server
             {
                 _isRecognizing = false;
                 _state.State = StateType.Idle;
-                Console.WriteLine($"Ups: {ex}");
+                LogInfo.Log($"Exception in {nameof(Button_ButtonEvent)}: {ex}", LogLevel.Info); 
             }
         }
 
@@ -430,8 +469,7 @@ namespace Nabaztag.Server
                     {
                         listner.ReceiveBufferSize = _buffer.Length;
                         _connectedClients++;
-                        Console.WriteLine($"{listner.RemoteEndPoint}   {listner.LocalEndPoint}   {listner.Connected}  # Connections: {_connectedClients}");
-                        // Is it a new Client?
+                        LogInfo.Log($"New client connection: {listner.RemoteEndPoint}   {listner.LocalEndPoint}   {listner.Connected}  # Connections: {_connectedClients}", LogLevel.Info);
                         while ((listner.Connected) && (_applicationRunning))
                         {
                             int received;
@@ -451,7 +489,7 @@ namespace Nabaztag.Server
 
                             if (readString.Length > 0)
                             {
-                                Console.WriteLine($"Received {readString.Length} bytes");
+                                LogInfo.Log($"Received {readString.Length} bytes", LogLevel.Debug);
                                 var retArray = readString.Replace("\r", "").Split('\n');
                                 foreach (var ret in retArray)
                                 {
@@ -459,8 +497,8 @@ namespace Nabaztag.Server
                                         continue;
 
                                     var res = JsonConvert.DeserializeObject<Paquet>(ret);
-                                    Console.WriteLine($"Type of paquet: {res.Type}");
-                                    Console.WriteLine($"{ret}");
+                                    LogInfo.Log($"Type of paquet: {res.Type}, received:", LogLevel.Debug);
+                                    LogInfo.Log($"{ret}", LogLevel.Debug);
                                     var uptime = System.Environment.TickCount / 1000;
                                     var response = new Response() { Status = Status.Ok, Connections = _connectedClients, Uptime = uptime };
                                     switch (res.Type)
@@ -539,7 +577,7 @@ namespace Nabaztag.Server
                                         case PaquetType.Cancel:
                                             var cancel = JsonConvert.DeserializeObject<Cancel>(ret);
                                             response.RequestId = cancel.RequestId;
-                                            if (String.IsNullOrEmpty(response.RequestId))
+                                            if (string.IsNullOrEmpty(response.RequestId))
                                             {
                                                 response.Status = Status.Error;
                                                 response.ErrorMessage = $"{nameof(Cancel.RequestId)} can't be empty or null";
@@ -607,7 +645,6 @@ namespace Nabaztag.Server
                                         case PaquetType.Test:
                                             var test = JsonConvert.DeserializeObject<TestMode>(ret);
                                             response.RequestId = test.RequestId;
-                                            Console.WriteLine($"{nameof(test)}");
                                             SendMessage(response, listner);
                                             lock (_queueLock)
                                             {
@@ -660,7 +697,7 @@ namespace Nabaztag.Server
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Exception: {ex}");
+                        LogInfo.Log($"Exception in listner thread: {ex}", LogLevel.Debug);
                     }
                     lock (_socketLock)
                     {
@@ -876,7 +913,7 @@ namespace Nabaztag.Server
             var json = JsonConvert.SerializeObject(objToSend) + "\r\n";
             byte[] buff = Encoding.UTF8.GetBytes(json);
             listener.BeginSend(buff, 0, buff.Length, SocketFlags.None, new AsyncCallback(EndSend), listener);
-            //Console.WriteLine($"Sent response: {json}");
+            LogInfo.Log($"Sent response: {json}", LogLevel.Debug);
         }
 
         private static void EndSend(IAsyncResult ar)
@@ -887,11 +924,11 @@ namespace Nabaztag.Server
             {
                 // Complete sending the data to the remote device.  
                 int bytesSent = handler.EndSend(ar);
-                //Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+                LogInfo.Log($"Sent {bytesSent} bytes to client.", LogLevel.Debug);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Removing one endpoint");
+                LogInfo.Log($"Removing one endpoint", LogLevel.Debug);
                 if (handler != null)
                 {
                     lock (_socketLock)
@@ -936,46 +973,54 @@ namespace Nabaztag.Server
                     return;
                 }
 
-                // Create SSML document.
-                XDocument body = new XDocument(
-                        new XElement("speak",
-                            new XAttribute("version", "1.0"),
-                            new XAttribute(XNamespace.Xml + "lang", $"{voice.Locale}"),
-                            new XElement("voice",
-                                new XAttribute(XNamespace.Xml + "lang", $"{voice.Locale}"),
-                                new XAttribute(XNamespace.Xml + "gender", $"{voice.Gender}"),
-                                new XAttribute("name", $"{voice.ShortName}"),
-                                input)));
-
-                using (HttpRequestMessage request = new HttpRequestMessage())
+                try
                 {
-                    // Set the HTTP method
-                    request.Method = HttpMethod.Post;
-                    // Construct the URI
-                    request.RequestUri = new Uri(host);
-                    // Set the content type header
-                    request.Content = new StringContent(body.ToString(), Encoding.UTF8, "application/ssml+xml");
-                    // Set additional header, such as Authorization and User-Agent
-                    request.Headers.Add("Authorization", "Bearer " + accessToken);
-                    request.Headers.Add("User-Agent", "Nabaztag");
-                    request.Headers.Add("Connection", "Keep-Alive");
-                    // Audio output format. See API reference for full list.
-                    request.Headers.Add("X-Microsoft-OutputFormat", "audio-16khz-32kbitrate-mono-mp3");
-                    using (HttpResponseMessage response = await client.SendAsync(request).ConfigureAwait(false))
-                    {
-                        response.EnsureSuccessStatusCode();
+                    // Create SSML document.
+                    XDocument body = new XDocument(
+                            new XElement("speak",
+                                new XAttribute("version", "1.0"),
+                                new XAttribute(XNamespace.Xml + "lang", $"{voice.Locale}"),
+                                new XElement("voice",
+                                    new XAttribute(XNamespace.Xml + "lang", $"{voice.Locale}"),
+                                    new XAttribute(XNamespace.Xml + "gender", $"{voice.Gender}"),
+                                    new XAttribute("name", $"{voice.ShortName}"),
+                                    input)));
 
-                        // Asynchronously read the response
-                        using (Stream dataStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                    using (HttpRequestMessage request = new HttpRequestMessage())
+                    {
+                        // Set the HTTP method
+                        request.Method = HttpMethod.Post;
+                        // Construct the URI
+                        request.RequestUri = new Uri(host);
+                        // Set the content type header
+                        request.Content = new StringContent(body.ToString(), Encoding.UTF8, "application/ssml+xml");
+                        // Set additional header, such as Authorization and User-Agent
+                        request.Headers.Add("Authorization", "Bearer " + accessToken);
+                        request.Headers.Add("User-Agent", "Nabaztag");
+                        request.Headers.Add("Connection", "Keep-Alive");
+                        // Audio output format. See API reference for full list.
+                        request.Headers.Add("X-Microsoft-OutputFormat", "audio-16khz-32kbitrate-mono-mp3");
+                        using (HttpResponseMessage response = await client.SendAsync(request).ConfigureAwait(false))
                         {
-                            using (FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Write))
+                            response.EnsureSuccessStatusCode();
+
+                            // Asynchronously read the response
+                            using (Stream dataStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
                             {
-                                await dataStream.CopyToAsync(fileStream).ConfigureAwait(false);
-                                fileStream.Close();
+                                using (FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Write))
+                                {
+                                    await dataStream.CopyToAsync(fileStream).ConfigureAwait(false);
+                                    fileStream.Close();
+                                }
                             }
                         }
                     }
                 }
+                catch (Exception ex)
+                {
+                    LogInfo.Log($"Exception in {nameof(SaveTextToSpeechFile)}: {ex}", LogLevel.Info);
+                }
+                
             }
         }
 
@@ -1011,6 +1056,8 @@ namespace Nabaztag.Server
 
                         requestStream.Flush();
                     }
+                    fs.Close();
+                    fs.Dispose();
                 }
 
                 var response = request.GetResponse();
@@ -1023,24 +1070,24 @@ namespace Nabaztag.Server
                     {
                         if (recognize.NBest != null)
                         {
-                            Console.WriteLine($"You said with confidence of {recognize.NBest?[0].Confidence.ToString("0.00")}: {recognize.NBest?[0].Display}");
+                            LogInfo.Log($"You said with confidence of {recognize.NBest?[0].Confidence.ToString("0.00")}: {recognize.NBest?[0].Display}", LogLevel.Debug);
                             return recognize.NBest?[0].Display;
                         }
                         else
                         {
-                            Console.WriteLine($"You said: {recognize.DisplayText}");
+                            LogInfo.Log($"You said: {recognize.DisplayText}", LogLevel.Debug);
                             return recognize.DisplayText;
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Sorry, didn't recognize anything");
+                        LogInfo.Log($"Sorry, didn't recognize anything", LogLevel.Debug);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                LogInfo.Log($"Exception in {nameof(Recognize)}: {ex}", LogLevel.Info);
             }
 
             return string.Empty;
@@ -1061,8 +1108,9 @@ namespace Nabaztag.Server
                     return recognize.prediction.topIntent;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                LogInfo.Log($"Exception in {nameof(GetTopIntent)}: {ex}", LogLevel.Info);
                 return string.Empty;
             }
         }
@@ -1078,12 +1126,12 @@ namespace Nabaztag.Server
                 {
                     StreamReader reader = new StreamReader(stream, Encoding.UTF8);
                     string responseString = reader.ReadToEnd();
-                    Console.WriteLine($"Speak result: {responseString}");
+                    LogInfo.Log($"Speak result: {responseString}", LogLevel.Debug);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Can't speak: {ex}");
+                LogInfo.Log($"Exception in {nameof(Speak)}: {ex}", LogLevel.Info);
             }
         }
 
@@ -1105,68 +1153,65 @@ namespace Nabaztag.Server
             {
                 return;
             }
-            //Console.WriteLine($"Playing animation");
+            
             var tempoMilliseconds = animation.Tempo * 10;
 
-            if ((!IsBusy) && (_state.State == StateType.Idle))
+            foreach (var col in animation.Colors)
             {
-                foreach (var col in animation.Colors)
+                if ((IsBusy) || (_state.State != StateType.Idle))
                 {
-                    //Console.WriteLine($"Playing animation");
-                    DateTime dtTempo = DateTime.Now.AddMilliseconds(tempoMilliseconds);
-                    if (!string.IsNullOrEmpty(col.Bottom))
+                    return;
+                }
+                
+                DateTime dtTempo = DateTime.Now.AddMilliseconds(tempoMilliseconds);
+                if (!string.IsNullOrEmpty(col.Bottom))
+                {
+                    var color = StringToByteArray(col.Bottom);
+                    if (color.Length == 3)
                     {
-                        var color = StringToByteArray(col.Bottom);
-                        //Console.WriteLine($"{color[0]}, {color[1]}, {color[2]}");
-                        if (color.Length == 3)
-                        {
-                            Leds.SetLed(Led.Bottom, Color.FromArgb(color[0], color[1], color[2]));
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(col.Center))
-                    {
-                        var color = StringToByteArray(col.Center);
-                        //Console.WriteLine($"{color[0]}, {color[1]}, {color[2]}");
-                        if (color.Length == 3)
-                        {
-                            Leds.SetLed(Led.Center, Color.FromArgb(color[0], color[1], color[2]));
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(col.Left))
-                    {
-                        var color = StringToByteArray(col.Left);
-                        //Console.WriteLine($"{color[0]}, {color[1]}, {color[2]}");
-                        if (color.Length == 3)
-                        {
-                            Leds.SetLed(Led.Left, Color.FromArgb(color[0], color[1], color[2]));
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(col.Right))
-                    {
-                        var color = StringToByteArray(col.Right);
-                        //Console.WriteLine($"{color[0]}, {color[1]}, {color[2]}");
-                        if (color.Length == 3)
-                        {
-                            Leds.SetLed(Led.Right, Color.FromArgb(color[0], color[1], color[2]));
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(col.Nose))
-                    {
-                        var color = StringToByteArray(col.Nose);
-                        //Console.WriteLine($"{color[0]}, {color[1]}, {color[2]}");
-                        if (color.Length == 3)
-                        {
-                            Leds.SetLed(Led.Nose, Color.FromArgb(color[0], color[1], color[2]));
-                        }
-                    }
-
-                    Leds.Render();
-                    while (dtTempo > DateTime.Now)
-                    {
-                        Thread.Sleep(1);
+                        Leds.SetLed(Led.Bottom, Color.FromArgb(color[0], color[1], color[2]));
                     }
                 }
+                if (!string.IsNullOrEmpty(col.Center))
+                {
+                    var color = StringToByteArray(col.Center);
+                    if (color.Length == 3)
+                    {
+                        Leds.SetLed(Led.Center, Color.FromArgb(color[0], color[1], color[2]));
+                    }
+                }
+                if (!string.IsNullOrEmpty(col.Left))
+                {
+                    var color = StringToByteArray(col.Left);
+                    if (color.Length == 3)
+                    {
+                        Leds.SetLed(Led.Left, Color.FromArgb(color[0], color[1], color[2]));
+                    }
+                }
+                if (!string.IsNullOrEmpty(col.Right))
+                {
+                    var color = StringToByteArray(col.Right);
+                    if (color.Length == 3)
+                    {
+                        Leds.SetLed(Led.Right, Color.FromArgb(color[0], color[1], color[2]));
+                    }
+                }
+                if (!string.IsNullOrEmpty(col.Nose))
+                {
+                    var color = StringToByteArray(col.Nose);
+                    if (color.Length == 3)
+                    {
+                        Leds.SetLed(Led.Nose, Color.FromArgb(color[0], color[1], color[2]));
+                    }
+                }
+
+                Leds.Render();
+                while (dtTempo > DateTime.Now)
+                {
+                    Thread.Sleep(1);
+                }
             }
+
         }
 
         private static void PlayAndWait(string fullName)
@@ -1200,7 +1245,6 @@ namespace Nabaztag.Server
                 {
                     return files[new Random().Next(files.Length - 1)].FullName;
                 }
-
             }
             catch
             { }

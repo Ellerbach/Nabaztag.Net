@@ -32,7 +32,7 @@ namespace Nabaztag.Net.Sample
             _nabaztag.EarsEvent += Nabaztag_EarsEvent;
             _nabaztag.AsrEvent += Nabaztag_AsrEvent;
 
-            //GetStatistics();
+            GetStatistics();
             //Thread.Sleep(500);
             //SleepAwake();
             //Tests();

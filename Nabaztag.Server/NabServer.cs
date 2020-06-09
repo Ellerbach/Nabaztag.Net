@@ -141,11 +141,19 @@ namespace Nabaztag.Server
 
             var listn = new Thread(() =>
             {
-                while (_applicationRunning)
+                try
                 {
-                    Thread.Sleep(10);
-                    ListenToSockets();
+                    while (_applicationRunning)
+                    {
+                        Thread.Sleep(10);
+                        ListenToSockets();
+                    }
                 }
+                catch (Exception ex)
+                {
+                    LogInfo.Log($"Exception in listening thread: {ex}", LogLevel.Info);
+                }
+                
             });
             listn.Priority = ThreadPriority.Lowest;
             listn.Start();
@@ -350,7 +358,7 @@ namespace Nabaztag.Server
                     {
                         _state.State = StateType.Playing;
                         LogInfo.Log($"About to record", LogLevel.Debug);
-                        Sound.Play($"{_path}/sounds/listen.mp3");
+                        Sound.Play($"{_path}/sounds/asr/listen.mp3");
                         Leds.SetAllLeds(Color.Black);
                         Leds.SetLedAndDisplay(Led.Nose, Color.Red);
                         while (Sound.IsPlaying)
@@ -387,7 +395,7 @@ namespace Nabaztag.Server
                     }
 
                     _state.State = StateType.Playing;
-                    Sound.Play($"{_path}/sounds/acquired.mp3");                 
+                    Sound.Play($"{_path}/sounds/asr/acquired.mp3");                 
                     Leds.SetLedAndDisplay(Led.Nose, Color.BlueViolet);
                     // Now do the recognition
                     LogInfo.Log($"Recognizing recording", LogLevel.Info);
@@ -1011,6 +1019,7 @@ namespace Nabaztag.Server
                                 {
                                     await dataStream.CopyToAsync(fileStream).ConfigureAwait(false);
                                     fileStream.Close();
+                                    fileStream.Dispose();
                                 }
                             }
                         }

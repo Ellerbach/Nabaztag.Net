@@ -95,7 +95,7 @@ namespace Nabaztag.Server
                     {
                         try
                         {
-                            File.AppendAllText(FileName, toLog);
+                            File.AppendAllText(FileName, toLog + "\r\n");
                         }
                         catch 
                         { }

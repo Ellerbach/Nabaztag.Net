@@ -17,6 +17,7 @@ echo "Installing service in systemd"
 sudo cp nabaztag-tts.service /etc/systemd/system/nabaztag-tts.service
 sudo systemctl daemon-reload
 sudo systemctl start nabaztag-tts
+sudo systemctl enable nabaztag-tts
 echo "Service installed and sarted"
 ipadd=$(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
 echo "Connect from your PC or Phone to http://"${ipadd}":8888 and be patient, the service take up to one minute to execute the first time"

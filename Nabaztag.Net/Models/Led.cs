@@ -9,32 +9,32 @@ namespace Nabaztag.Net.Models
     /// <summary>
     /// Enum for the Led on the rabbit
     /// </summary>
-    public enum Led 
+    public enum Led
     {
         /// <summary>
         /// Nose
         /// </summary>
         [EnumMember(Value = "nose")]
-        Nose,
+        Nose = 0,
         /// <summary>
         /// Right
         /// </summary>
         [EnumMember(Value = "right")]
-        Right,
+        Right = 3,
         /// <summary>
         /// Center
         /// </summary>
         [EnumMember(Value = "center")]
-        Center,
+        Center = 2,
         /// <summary>
         /// Left
         /// </summary>
         [EnumMember(Value = "left")]
-        Left,
+        Left = 1,
         /// <summary>
         /// Bottom
         /// </summary>
         [EnumMember(Value = "bottom")]
-        Bottom 
+        Bottom = 4
     }
 }

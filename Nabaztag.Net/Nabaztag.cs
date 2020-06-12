@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Nabaztag.Net
@@ -16,8 +17,11 @@ namespace Nabaztag.Net
     public class Nabaztag
     {
         private const int DefaultTcpPortEmmit = 10543;
+        private const int MaxWaitingTimeToReconnect = 30_000;
         private Dictionary<string, Response> _LastRequestId = new Dictionary<string, Response>();
         private TcpClient _TcpClient;
+        private string _hostName;
+        private int _port;
 
         // public event s
         public delegate void EarsEventHandler(object sender, EarsEvent ears);
@@ -44,9 +48,43 @@ namespace Nabaztag.Net
 
         public Nabaztag(string hostName, int tcpPort)
         {
+            _hostName = hostName;
+            _port = tcpPort;
             Statistics = new Statistics();
-            _TcpClient = new TcpClient(hostName, tcpPort);
+            TryToConnect();
             Task.Factory.StartNew(() => ProcessIncoming());
+        }
+
+        private bool IsConnected()
+        {
+            if (_TcpClient == null)
+            {
+                return false;
+            }
+
+            return _TcpClient.Connected;
+        }
+
+        private void TryToConnect()
+        {
+            int waitingTime = 100;
+
+            while (!IsConnected())
+            {
+                try
+                {
+                    _TcpClient = new TcpClient(_hostName, _port);
+                }
+                catch
+                {
+                    waitingTime += 100;
+                    if (waitingTime > MaxWaitingTimeToReconnect)
+                    {
+                        waitingTime = MaxWaitingTimeToReconnect;
+                    }
+                    Thread.Sleep(waitingTime);
+                }
+            }
         }
 
         /// <summary>
@@ -234,15 +272,34 @@ namespace Nabaztag.Net
                 info.RequestId = reqId.ToString();
             }
 
+            var ret = JsonConvert.SerializeObject(info);
+            Console.WriteLine($"{ret.Length}  {ret}");
+
             return SendMessageProcessResponse(JsonConvert.SerializeObject(info), reqId, cancelAfterSeconds);
         }
 
         private bool SendMessage(string message)
         {
-            if (!_TcpClient.Client.Connected)
-                return false;
+            if (!_TcpClient.Connected)
+            {
+                TryToConnect();
+                //return false;
+            }
             message += "\r\n";
-            var ret = _TcpClient.Client.Send(Encoding.UTF8.GetBytes(message));
+            int ret;
+            try
+            {
+                ret = _TcpClient.Client.Send(Encoding.UTF8.GetBytes(message));
+            }
+            catch 
+            {
+                // Try one more time
+                _TcpClient.Dispose();
+                _TcpClient = null;
+                TryToConnect();
+                ret = _TcpClient.Client.Send(Encoding.UTF8.GetBytes(message));
+            }
+            
             return (ret > 0);
         }
 
@@ -300,6 +357,7 @@ namespace Nabaztag.Net
                     {
                         if (!string.IsNullOrEmpty(result))
                         {
+                            Console.WriteLine(result);
                             try
                             {
                                 var ret = JsonConvert.DeserializeObject<Paquet>(result);
@@ -334,7 +392,7 @@ namespace Nabaztag.Net
                                         {
                                             // If the Response.Status is null then it's the answer to the statistics
                                             _LastRequestId[response.RequestId] = response.Status == null ? new Response() { Status = Status.Ok } : response;
-                                        }                                        
+                                        }
 
                                         break;
                                     case PaquetType.AsrEvent:

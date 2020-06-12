@@ -30,6 +30,12 @@ namespace Nabaztag.Net.Models
         /// </summary>
         [EnumMember(Value = "asr")]
         [JsonProperty(PropertyName = "asr")]
-        Asr
+        Asr,
+        /// <summary>
+        /// RFID
+        /// </summary>
+        [EnumMember(Value = "rfid")]
+        [JsonProperty(PropertyName = "rfid")]
+        Rfid,
     }
 }

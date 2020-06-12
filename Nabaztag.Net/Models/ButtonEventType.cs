@@ -43,6 +43,12 @@ namespace Nabaztag.Net.Models
         /// </summary>
         [EnumMember(Value = "click_and_hold")]
         [JsonProperty(PropertyName = "click_and_hold")]
-        ClickAndHold
+        ClickAndHold,
+        /// <summary>
+        /// Button is click and hold
+        /// </summary>
+        [EnumMember(Value = "triple_click")]
+        [JsonProperty(PropertyName = "triple_click")]
+        TripleClick
     }
 }

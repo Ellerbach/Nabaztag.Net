@@ -135,6 +135,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\Authentication.cs" />
+    <Compile Include="Models\NabaztagConnection.cs" />
     <Compile Include="Models\TtsSetting.cs" />
     <Compile Include="Models\Voice.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

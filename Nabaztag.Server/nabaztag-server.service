@@ -1,0 +1,14 @@
+[Unit]
+Description=Nabaztag Server
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=mono /home/pi/nabsrv/Nabaztag.Server.exe -f -i
+WorkingDirectory=/home/pi/nabsrv/
+User=root
+
+[Install]
+WantedBy=multi-user.target

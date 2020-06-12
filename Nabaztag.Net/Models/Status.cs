@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
 namespace Nabaztag.Net.Models
 {
@@ -15,21 +16,25 @@ namespace Nabaztag.Net.Models
         /// OK
         /// </summary>
         [JsonProperty(PropertyName = "ok")]
+        [EnumMember(Value = "ok")]
         Ok,
         /// <summary>
         /// canceled
         /// </summary>
         [JsonProperty(PropertyName = "canceled")]
+        [EnumMember(Value = "canceled")]
         Canceled,
         /// <summary>
         /// Expired
         /// </summary>
         [JsonProperty(PropertyName = "expired")]
+        [EnumMember(Value = "expired")]
         Expired,
         /// <summary>
         /// Error
         /// </summary>
         [JsonProperty(PropertyName = "error")]
+        [EnumMember(Value = "error")]
         Error
     }
 }

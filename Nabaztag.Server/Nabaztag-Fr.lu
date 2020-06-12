@@ -1,0 +1,74 @@
+
+> LUIS application information
+> !# @app.name = Nabaztag-Fr
+> !# @app.desc = For the Nabaztag
+> !# @app.versionId = 0.1
+> !# @app.culture = fr-fr
+> !# @app.luis_schema_version = 7.0.0
+> !# @app.settings.NormalizeDiacritics = true
+> !# @app.tokenizerVersion = 1.0.0
+
+
+> # Intent definitions
+
+## airquality_forecast
+- donne moi la qualité de l'air
+- est-ce que c'est pollué?
+- est-ce qu'on respire bien aujourd'hui?
+
+
+## clock
+- donne moi l'heure
+- donne moi l'heure s'il te plaît
+- j'aimerais avoir l'heure
+- peux-tu me donner l'heure exacte?
+- peux-tu me donner l'heure?
+- quelle heure est-il?
+
+
+## None
+
+
+## sleep
+- aller, va au lit
+- c'est le moment d'aller au lit
+- c'est l'heure d'aller au lit
+- c'est l'heure de se coucher
+- fais dodo s'il te plait
+- je sais que tu es fatigué alors dors
+
+
+## taichi
+- ce serait bien que tu fasses de l'exercice
+- c'est l'heure de l'exercise
+- encore du taï-chi
+- étire toi les oreilles
+- fais du taichi s'il te plaît
+- fait du sport
+- taï-chi encore et encore
+- tu me fais un peu de taï-chi, s'il te plaît.
+- tu peux faire un peu d'exercice, s'il te plaît?
+
+
+## weather_forecast
+- j'aurais voulu savoir s'il va faire beau ou s'il va plevoir
+- je veux connaître le temps de demain
+- quel temps fait-il aujourd'hui?
+- tu peux me donner la météo de demain?
+- tu peux me tonner le temps
+
+
+> # Entity definitions
+
+
+> # PREBUILT Entity definitions
+
+
+> # Phrase list definitions
+
+
+> # List entities
+
+> # RegEx entities
+
+

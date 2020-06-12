@@ -15,7 +15,6 @@ namespace Nabaztag.Server.Models
         public string LuisAddId { get; set; }
         public string LuisKey { get; set; }
         public string Locale { get; set; }
-        public string TtsUrl { get; set; }
         public string ClockPhrase { get; set; }
         public Voice PrefferedVoice { get; set; }
     }
